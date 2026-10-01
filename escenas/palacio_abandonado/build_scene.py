@@ -403,9 +403,9 @@ MAT = {
     'gate': mat_stone('Torre_puerta', (0.33, 0.30, 0.25), (0.16, 0.145, 0.12), brick_w=0.95, row_h=0.45,
                       moss=0.7, seed=7.0),
     'palace': mat_stone('Palacio_sillar', (0.52, 0.47, 0.38), (0.30, 0.27, 0.21), brick_w=1.25, row_h=0.5,
-                        moss=0.55, streaks=0.85, mortar=0.015, seed=11.0),
+                        moss=0.3, streaks=0.85, mortar=0.015, seed=11.0),
     'trim': mat_stone('Molduras', (0.56, 0.51, 0.42), (0.38, 0.34, 0.27), brick_w=1.6, row_h=0.9,
-                      moss=0.5, streaks=0.9, mortar=0.006, seed=5.0),
+                      moss=0.3, streaks=0.9, mortar=0.006, seed=5.0),
     'rock': mat_rock('Escombro'),
     'slate': mat_slate('Pizarra'),
     'wood': mat_wood('Madera_vieja'),
@@ -456,6 +456,29 @@ def add_cyl(bm, c, r, h, seg=24, r2=None, rot=(0, 0, 0), caps=True):
     mtx = Matrix.Translation(c) @ Euler(rot).to_matrix().to_4x4()
     return bmesh.ops.create_cone(bm, cap_ends=caps, cap_tris=False, segments=seg, radius1=r,
                                  radius2=r if r2 is None else r2, depth=h, matrix=mtx)['verts']
+
+
+def arch_prism(bm, cx, cy, z_bottom, z_spring, half_w, length, axis='Y', seg=24):
+    """Prisma cerrado (rectángulo + medio punto) para abrir arcos con un solo booleano."""
+    prof = [(-half_w, z_bottom), (half_w, z_bottom)]
+    for i in range(seg + 1):
+        a = math.pi * i / seg
+        prof.append((half_w * math.cos(a), z_spring + half_w * math.sin(a)))
+    rings = []
+    for d in (-length / 2, length / 2):
+        ring = []
+        for (u, z) in prof:
+            if axis == 'Y':
+                ring.append(bm.verts.new((cx + u, cy + d, z)))
+            else:
+                ring.append(bm.verts.new((cx + d, cy + u, z)))
+        rings.append(ring)
+    n = len(prof)
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((rings[0][i], rings[0][j], rings[1][j], rings[1][i]))
+    bm.faces.new(rings[0])
+    bm.faces.new(list(reversed(rings[1])))
 
 
 def apply_modifiers(ob):
@@ -663,9 +686,7 @@ def build_walls():
     add_box(bm, (0, 0, 6.0), (14.4, 7.2, 14.0))
     gh = obj_from_bm('Torre_puerta', bm, MAT['gate'])
     cut = bmesh.new()
-    add_box(cut, (0, 0, GATE_SPRING / 2 - 0.5), (GATE_HALF_W * 2, 12, GATE_SPRING + 1))
-    add_cyl(cut, (0, 0, GATE_SPRING), GATE_HALF_W, 12, seg=40, rot=(math.pi / 2, 0, 0))
-    bmesh.ops.remove_doubles(cut, verts=cut.verts[:], dist=0.001)
+    arch_prism(cut, 0, 0, -1.5, GATE_SPRING, GATE_HALF_W, 12, seg=40)
     boolean_cut(gh, cut, MAT['gate'])
     # Saeteras
     cut = bmesh.new()
@@ -799,14 +820,14 @@ def build_palace():
     pav = obj_from_bm('Palacio_pabellon', bm, MAT['palace'])
     cut = bmesh.new()
     # puerta en arco
-    add_box(cut, (0, 53.5, PAL_FLOOR + 2.2), (3.6, 1.6, 4.4))
-    add_cyl(cut, (0, 53.5, PAL_FLOOR + 4.4), 1.8, 1.6, seg=32, rot=(math.pi / 2, 0, 0))
+    arch_prism(cut, 0, 53.5, PAL_FLOOR, PAL_FLOOR + 4.4, 1.8, 1.6, seg=32)
     window_cutters(cut, (-4.0, 4.0), [PAL_FLOOR + 2.2], 1.4, 2.8, 53.5)
     window_cutters(cut, (-4.0, 0.0, 4.0), [PAL_FLOOR + 8.2], 1.5, 3.4, 53.5)
     window_cutters(cut, (-4.0, 0.0, 4.0), [PAL_FLOOR + 13.4], 1.3, 2.4, 53.5)
     # óculo
+    boolean_cut(pav, cut, MAT['void'])
+    cut = bmesh.new()
     add_cyl(cut, (0, 53.5, 18.3), 1.1, 1.6, seg=32, rot=(math.pi / 2, 0, 0))
-    bmesh.ops.remove_doubles(cut, verts=cut.verts[:], dist=0.001)
     boolean_cut(pav, cut, MAT['void'])
 
     trim = bmesh.new()
@@ -944,11 +965,10 @@ def build_palace():
     bm = bmesh.new()
     add_box(bm, (0, 64.0, 26.0), (7.0, 7.0, 11.0))
     bel = obj_from_bm('Campanario', bm, MAT['palace'])
-    cut = bmesh.new()
-    for rot in (0, math.pi / 2):
-        add_box(cut, (0, 64.0, 26.0), (2.0, 9.0, 4.4) if rot == 0 else (9.0, 2.0, 4.4))
-        add_cyl(cut, (0, 64.0, 28.2), 1.0, 9.0, seg=24, rot=(math.pi / 2, 0, rot))
-    boolean_cut(bel, cut, MAT['void'])
+    for axis in ('Y', 'X'):
+        cut = bmesh.new()
+        arch_prism(cut, 0, 64.0, 23.8, 28.2, 1.0, 9.0, axis=axis)
+        boolean_cut(bel, cut, MAT['void'])
     bm = bmesh.new()
     a = [bm.verts.new(p) for p in ((-4.0, 60.0, 31.5), (4.0, 60.0, 31.5), (4.0, 68.0, 31.5), (-4.0, 68.0, 31.5),
                                    (0, 64.0, 38.5))]
@@ -1034,6 +1054,8 @@ def build_courtyard():
     basin = obj_from_bm('Fuente', bm, MAT['trim'])
     cut = bmesh.new()
     add_cyl(cut, (fx, fy, 0.75), 2.85, 1.0, seg=48)
+    boolean_cut(basin, cut, MAT['trim'])
+    cut = bmesh.new()
     add_box(cut, (fx + 3.0, fy - 0.6, 0.85), (1.6, 1.2, 0.6), (0, 0, 0.3))  # trozo roto del borde
     boolean_cut(basin, cut, MAT['trim'])
     bm = bmesh.new()
@@ -1144,7 +1166,9 @@ def make_grass_variants():
             h = r.uniform(0.25, 0.55) if not tall else r.uniform(0.6, 1.0)
             blade(bm, base, h, d, r.uniform(0.05, 0.3) * h, r.uniform(0.008, 0.016))
         ob = obj_from_bm('hierba_%d' % k, bm, MAT['grass'], coll=coll)
-    # flores silvestres
+    # flores silvestres (colección aparte, mucho más dispersas)
+    global FLOWER_COLL
+    FLOWER_COLL = hidden_coll('Flores')
     for k, mname in enumerate(('flower_w', 'flower_y', 'flower_p')):
         bm = bmesh.new()
         for _ in range(3):
@@ -1164,7 +1188,7 @@ def make_grass_variants():
         head.free()
         bm.from_mesh(me)
         bpy.data.meshes.remove(me)
-        ob = obj_from_bm('flor_%d' % k, bm, [MAT['grass'], MAT[mname]], coll=coll)
+        ob = obj_from_bm('flor_%d' % k, bm, [MAT['grass'], MAT[mname]], coll=FLOWER_COLL)
         # las caras de la cabeza (últimas) con material de flor
         n_head = 3 * 20
         for p in ob.data.polygons[-n_head:]:
@@ -1481,7 +1505,9 @@ LEAF_COLL = make_leaf_clumps()
 IVY_COLL = make_ivy_leaves()
 
 gn_scatter('hierba', ground, GRASS_COLL, density=55.0, seed=1, smin=0.7, smax=1.35, prob_fn=grass_prob,
-           tilt=0.2, nvariants=8)
+           tilt=0.2, nvariants=5)
+gn_scatter('flores', ground, FLOWER_COLL, density=0.8, seed=9, smin=0.8, smax=1.2, prob_fn=grass_prob,
+           tilt=0.15, nvariants=3)
 for obname in ('Muralla', 'Torre_puerta', 'Palacio_cuerpo', 'Palacio_pabellon', 'Torre_redonda_izq',
                'Torre_redonda_der', 'Torres_esquina'):
     ob = bpy.data.objects[obname]
@@ -1504,7 +1530,7 @@ for i in range(26):
         continue
     build_bush('Arbusto_%d' % i, (x, y, ground_h(x, y)), r.uniform(0.6, 1.6), i)
 for (x, y, s) in ((-5.5, 51.0, 1.2), (6.0, 52.0, 1.0), (-9.0, 54.5, 1.3), (13.0, 54.5, 1.1),
-                  (-38, 2.5, 1.5), (30, 3.0, 1.3), (-3.2, 5.5, 0.6), (3.4, -5.0, 0.7)):
+                  (-38, 2.5, 1.5), (30, 3.0, 1.3), (-5.0, 7.0, 0.6), (5.2, -6.5, 0.7)):
     build_bush('Arbusto_e_%d_%d' % (x, y), (x, y, ground_h(x, y)), s, int(x * 7 + y))
 build_far_forest()
 VEG.hide_render = True
@@ -1547,8 +1573,8 @@ world.use_nodes = True
 wnt = world.node_tree
 wnt.nodes.clear()
 sky = node(wnt, 'ShaderNodeTexSky', sky_type='MULTIPLE_SCATTERING')
-SUN_ELEV = math.radians(13.0)
-SUN_AZ = math.radians(-145.0)   # sol a la izquierda y algo por detrás de la cámara
+SUN_ELEV = math.radians(24.0)
+SUN_AZ = math.radians(-115.0)   # sol a la izquierda y algo por detrás de la cámara
 sky.sun_elevation = SUN_ELEV
 sky.sun_rotation = SUN_AZ
 sky.sun_disc = False
@@ -1561,14 +1587,15 @@ wo = wnt.nodes.new('ShaderNodeOutputWorld')
 wnt.links.new(bg.outputs[0], wo.inputs['Surface'])
 
 sun_data = bpy.data.lights.new('Sol', 'SUN')
-sun_data.energy = 4.2
+sun_data.energy = 4.8
 sun_data.color = (1.0, 0.80, 0.58)
 sun_data.angle = math.radians(1.2)
 sun = link(bpy.data.objects.new('Sol', sun_data))
 sdir = Vector((math.sin(SUN_AZ) * math.cos(SUN_ELEV) * -1, math.cos(SUN_AZ) * math.cos(SUN_ELEV) * -1,
                -math.sin(SUN_ELEV)))
 # dirección en que viaja la luz: desde atrás-izquierda hacia delante-derecha
-sdir = Vector((0.55, 0.78, -math.sin(SUN_ELEV))).normalized()
+h_dir = Vector((0.80, 0.60, 0.0)).normalized() * math.cos(SUN_ELEV)
+sdir = Vector((h_dir.x, h_dir.y, -math.sin(SUN_ELEV))).normalized()
 sun.rotation_euler = sdir.to_track_quat('-Z', 'Y').to_euler()
 
 fogm, fnt, fout = new_mat('Bruma')
@@ -1730,7 +1757,7 @@ try:
     scene.view_settings.look = 'AgX - Medium High Contrast'
 except Exception:
     pass
-scene.view_settings.exposure = 0.0
+scene.view_settings.exposure = 0.35
 scene.render.image_settings.file_format = 'PNG'
 scene.render.image_settings.color_mode = 'RGB'
 scene.render.filepath = os.path.join(HERE, 'render', 'frames', 'f_')
