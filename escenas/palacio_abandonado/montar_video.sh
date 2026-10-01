@@ -1,0 +1,7 @@
+#!/bin/sh
+# Junta los fotogramas renderizados y el sonido en el vídeo final (requiere ffmpeg).
+cd "$(dirname "$0")"
+ffmpeg -y -framerate 24 -i render/frames/f_%04d.png -i sonido.wav \
+  -vf "vignette=angle=PI/6,noise=alls=5:allf=t,format=yuv420p" \
+  -c:v libx264 -preset slow -crf 16 -c:a aac -b:a 256k -shortest -movflags +faststart \
+  palacio_abandonado.mp4
