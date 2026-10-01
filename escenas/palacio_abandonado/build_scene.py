@@ -151,7 +151,7 @@ def mat_stone(name, light, dark, brick_w=0.9, row_h=0.42, moss=0.6, streaks=0.6,
     wob = NOISE(nt, geo.outputs['Position'], scale=0.35, detail=2)
     wv = node(nt, 'ShaderNodeVectorMath', operation='MULTIPLY_ADD')
     nt.links.new(wob.outputs[1], wv.inputs[0])
-    wv.inputs[1].default_value = (0.12, 0.08, 0.0)
+    wv.inputs[1].default_value = (0.28, 0.14, 0.0)
     nt.links.new(comb.outputs[0], wv.inputs[2])
     brick = node(nt, 'ShaderNodeTexBrick', offset=0.5, offset_frequency=2)
     nt.links.new(wv.outputs[0], brick.inputs['Vector'])
@@ -162,7 +162,11 @@ def mat_stone(name, light, dark, brick_w=0.9, row_h=0.42, moss=0.6, streaks=0.6,
     brick.inputs['Mortar Smooth'].default_value = 0.4
     brick.inputs['Brick Width'].default_value = brick_w
     brick.inputs['Row Height'].default_value = row_h
-    per_brick = RAMP(nt, brick.outputs['Color'], [(0.0, dark), (1.0, light)])
+    per_brick = RAMP(nt, brick.outputs['Color'], [(0.0, dark), (0.55, tuple((a + b) / 2 for a, b in zip(dark, light))),
+                                                  (1.0, light)])
+    tint = NOISE(nt, geo.outputs['Position'], scale=0.6, detail=2)
+    per_brick = MIXC(nt, 0.35, per_brick, RAMP(nt, tint.outputs[0], [(0.35, (0.85, 0.9, 1.0)), (0.65, (1.1, 1.0, 0.85))]),
+                     'MULTIPLY')
     # Textura dentro de cada piedra
     n1 = NOISE(nt, geo.outputs['Position'], scale=4.0, detail=8, rough=0.6)
     grain = RAMP(nt, n1.outputs[0], [(0.3, (0.55, 0.55, 0.55)), (0.7, (1, 1, 1))])
@@ -198,6 +202,7 @@ def mat_stone(name, light, dark, brick_w=0.9, row_h=0.42, moss=0.6, streaks=0.6,
     hgt = M(nt, 'ADD', M(nt, 'MULTIPLY', brick.outputs['Factor'], -1.0),
             M(nt, 'MULTIPLY', n1.outputs[0], 0.6))
     hgt = M(nt, 'ADD', hgt, M(nt, 'MULTIPLY', nm.outputs[0], 0.4))
+    hgt = M(nt, 'ADD', hgt, M(nt, 'MULTIPLY', brick.outputs['Color'], 0.35))
     nt.links.new(bump(nt, hgt, 0.55, 0.04), bsdf.inputs['Normal'])
     nt.links.new(bsdf.outputs[0], out.inputs[0])
     return m
@@ -398,13 +403,13 @@ def mat_simple(name, col, rough=0.9):
 
 
 MAT = {
-    'wall': mat_stone('Muralla', (0.30, 0.27, 0.23), (0.15, 0.135, 0.115), brick_w=0.75, row_h=0.36,
+    'wall': mat_stone('Muralla', (0.33, 0.29, 0.23), (0.12, 0.105, 0.085), brick_w=0.75, row_h=0.36,
                       moss=0.85, seed=3.0),
-    'gate': mat_stone('Torre_puerta', (0.33, 0.30, 0.25), (0.16, 0.145, 0.12), brick_w=0.95, row_h=0.45,
+    'gate': mat_stone('Torre_puerta', (0.35, 0.31, 0.25), (0.13, 0.115, 0.09), brick_w=0.95, row_h=0.45,
                       moss=0.7, seed=7.0),
-    'palace': mat_stone('Palacio_sillar', (0.52, 0.47, 0.38), (0.30, 0.27, 0.21), brick_w=1.25, row_h=0.5,
+    'palace': mat_stone('Palacio_sillar', (0.50, 0.44, 0.34), (0.24, 0.20, 0.15), brick_w=1.25, row_h=0.5,
                         moss=0.3, streaks=0.85, mortar=0.015, seed=11.0),
-    'trim': mat_stone('Molduras', (0.56, 0.51, 0.42), (0.38, 0.34, 0.27), brick_w=1.6, row_h=0.9,
+    'trim': mat_stone('Molduras', (0.52, 0.46, 0.37), (0.33, 0.29, 0.22), brick_w=1.6, row_h=0.9,
                       moss=0.3, streaks=0.9, mortar=0.006, seed=5.0),
     'rock': mat_rock('Escombro'),
     'slate': mat_slate('Pizarra'),
@@ -1601,7 +1606,7 @@ sun.rotation_euler = sdir.to_track_quat('-Z', 'Y').to_euler()
 fogm, fnt, fout = new_mat('Bruma')
 vol = fnt.nodes.new('ShaderNodeVolumePrincipled')
 setin(fnt, vol.inputs['Color'], (0.92, 0.88, 0.82))
-vol.inputs['Density'].default_value = 0.0035
+vol.inputs['Density'].default_value = 0.006
 vol.inputs['Anisotropy'].default_value = 0.55
 fnt.links.new(vol.outputs[0], fout.inputs['Volume'])
 bm = bmesh.new()
