@@ -102,10 +102,10 @@ def plate_text(c, text, loc, mat, size=0.16, rot=(math.pi / 2, 0, math.pi)):
     cu = bpy.data.curves.new('placa', 'FONT')
     cu.body = text
     cu.size = size
-    cu.extrude = 0.006
+    cu.extrude = 0.01
     cu.align_x = 'CENTER'
     cu.align_y = 'CENTER'
-    cu.bevel_depth = 0.0015
+    cu.bevel_depth = 0.003
     ob = bpy.data.objects.new('Numero placa', cu)
     c.objects.link(ob)
     ob.location = loc
@@ -190,6 +190,16 @@ def build(main, ctx):
     obs.append(smk)
     obs.append(cyl('Puerta caja humos', c, 0.8, 0.08, (0, Y(1.02), zc), soot, rot=(math.pi / 2, 0, 0), seg=64))
     obs.append(cyl('Cierre puerta', c, 0.07, 0.12, (0, Y(0.96), zc), rust, rot=(math.pi / 2, 0, 0), seg=16))
+    # remaches, bisagras y manetas de la puerta de la caja de humos
+    for k in range(36):
+        a = 2 * math.pi * k / 36
+        obs.append(cyl('Remache puerta', c, 0.017, 0.03, (0.72 * math.cos(a), Y(0.975), zc + 0.72 * math.sin(a)),
+                       rust, rot=(math.pi / 2, 0, 0), seg=8))
+    for dz in (0.42, -0.42):
+        obs.append(box('Bisagra puerta', c, (0.95, 0.025, 0.08), (0.42, Y(0.965), zc + dz), rust, bevel=0.008))
+        obs.append(cyl('Pernio', c, 0.04, 0.14, (0.86, Y(0.965), zc + dz), rust, seg=16))
+    for ang in (0.35, 0.35 + math.pi / 2):
+        obs.append(box('Maneta puerta', c, (0.42, 0.03, 0.035), (0, Y(0.9), zc), rust, rot=(0, ang, 0), bevel=0.008))
     for s in (-1, 1):
         obs.append(box('Bisagra', c, (0.5, 0.05, 0.05), (0.25, Y(0.98), zc + 0.4 * s), rust))
     boiler = cyl('Caldera', c, 0.82, 6.4, (0, Y(5.85), zc), paint, rot=(math.pi / 2, 0, 0), seg=72)
@@ -239,9 +249,11 @@ def build(main, ctx):
     for s in (-1, 1):
         obs.append(box('Farol lateral', c, (0.22, 0.2, 0.28), (s * 0.95, Y(0.3), 1.72), soot, bevel=0.015))
         obs.append(cyl('Farol lateral cristal', c, 0.075, 0.02, (s * 0.95, Y(0.19), 1.72), glass, rot=(math.pi / 2, 0, 0), seg=24))
-    pl = box('Placa numero', c, (0.95, 0.03, 0.26), (0, Y(0.94), zc - 0.35), brass, bevel=0.01)
+    # placa de número: fondo pintado de rojo oscuro y cifras de latón en relieve
+    pl = box('Placa numero', c, (0.98, 0.03, 0.27), (0, Y(0.94), zc - 0.5), red, bevel=0.012)
     obs.append(pl)
-    plate_text(c, '030-2471', (0, Y(0.92), zc - 0.35), brass, size=0.16)
+    obs.append(box('Marco placa', c, (1.02, 0.02, 0.31), (0, Y(0.955), zc - 0.5), brass, bevel=0.01))
+    plate_text(c, '030-2471', (0, Y(0.918), zc - 0.5), brass, size=0.19)
     pl2 = cyl('Placa fabricante', c, 0.16, 0.025, (-0.7, Y(5.1), zc + 0.55), brass, rot=(0, math.pi / 2, 0), seg=40)
     pl2.rotation_euler = (0, math.radians(-90 + 20), 0)
 

@@ -82,7 +82,7 @@ def viaduct(c, stone, cut_c):
     m.operand_type = 'COLLECTION'
     m.collection = cut_c
     apply_mods(body)
-    adaptive(body)
+    # sin subdivisión adaptable: el booleano deja triángulos muy alargados que se deforman al desplazar
     # cornisa e impostas
     parts = []
     r = rng(8)
@@ -120,8 +120,8 @@ def valley_z(x, y):
     z = VALLEY_Z
     z += max(0.0, 128 - y) ** 1.35 * 0.32                       # canchal al pie del acantilado
     # ladera de enfrente: sube hasta el nivel de la vía, meseta y luego baja hacia una cuenca abierta
-    z += min(74.0, max(0.0, y - 282) * 1.15)
-    z -= max(0.0, y - 520) * 0.16
+    z += min(40.0, max(0.0, y - 282) * 0.75)
+    z -= max(0.0, y - 560) * 0.12
     z += max(0.0, abs(x) - 300) * 0.05
     yr = 196 + 26 * math.sin(x / 95.0) + 9 * math.sin(x / 31.0)
     z -= 3.2 * math.exp(-((y - yr) / 9.0) ** 2)                 # cauce del río
@@ -238,7 +238,7 @@ def build(main, ctx):
     cut_c = coll('Cortes viaducto', main)
     tmats = ctx.get('tunel', {})
     stone = tmats.get('stone') or M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55)
-    stone_v = M.mat_generic('Sillar viaducto', 'sillar', 0.3, moss=0.6, disp_scale=0.05)
+    stone_v = M.mat_generic('Sillar viaducto', 'sillar', 0.3, moss=0.6, disp_scale=0.0, bump=1.5)
     viaduct(c, stone_v, cut_c)
     # vía sobre el viaducto: hasta el hundimiento (con los carriles colgando) y después del hueco
     mats = (tmats.get('rail') or M.mat_rail(), tmats.get('wood') or M.mat_generic('Madera traviesas', 'madera', 0.8),
@@ -248,15 +248,20 @@ def build(main, ctx):
     # escombros del tramo hundido en el fondo del valle
     g = (cfg.GAP[0] + cfg.GAP[1]) / 2
     T.rubble(c, (stone_v, tmats.get('soil') or stone_v), (0.0, g), 12.0, 7.0, 90, 71, z0=valley_z(0, g) - 0.5)
-    ground = M.mat_generic('Suelo valle', 'pradera', 0.08, moss=0.2, disp_scale=0.4, bump=1.0)
+    ground = M.mat_paisaje('Suelo valle', 0.1, disp_scale=0.4)
     val = valley(c, ground)
     river(c)
-    mnt = M.mat_generic('Montana', 'roca', 0.01, moss=0.6, bump=0.5)
+    mnt = M.mat_paisaje('Montana', 0.012)
     mountains(c, mnt)
+    # llanura de fondo bajo el valle y las montañas: tapa cualquier hueco hacia el horizonte
+    box('Llanura fondo', c, (16000, 9000, 2), (0, 4800, -126), mnt)
     # bosque del valle y arbustos
     from .vegetacion import scatter, set_density
     trees = P.library('arbol', P.small_tree, n_fallback=3)
     shrubs = P.library('arbusto', P.shrub)
+    # los árboles y arbustos escaneados son pequeños (3-5 m): se escalan; los sustitutos ya tienen su tamaño
+    kt = 1.0 if trees.children else 1 / 3.4
+    ks = 1.0 if shrubs.children else 1 / 2.4
 
     def forest(x, y, z):
         d_river = abs(y - river_y(x))
@@ -268,9 +273,10 @@ def build(main, ctx):
     mon = bpy.data.objects.get('Monte')
     if mon:
         set_density(mon, lambda x, y, z: max(0.0, min(1.0, 0.6 + noise.fractal(Vector((x / 90, y / 90, 2.2)), 0.6, 2.0, 3) * 1.3)))
-        scatter('Bosque monte', mon, trees, 0.006, c, scale=(0.8, 1.6), seed=510, tilt=0.06, sway=0.015)
-        scatter('Arbustos monte lejos', mon, shrubs, 0.008, c, scale=(1.2, 2.4), seed=511, sway=0.02)
-    scatter('Bosque', val, trees, 0.0065, c, scale=(0.8, 1.5), seed=500, tilt=0.06, sway=0.015)
-    scatter('Arbustos valle', val, shrubs, 0.012, c, scale=(1.0, 2.2), seed=501, sway=0.02)
+        scatter('Bosque monte', mon, trees, 0.01, c, scale=(2.6 * kt, 4.4 * kt), seed=510, tilt=0.05, sway=0.01)
+        scatter('Arbustos monte lejos', mon, shrubs, 0.012, c, scale=(2.5 * ks, 4.5 * ks), seed=511, sway=0.02)
+    # los árboles escaneados miden 3-5 m: se escalan para un bosque de 10-20 m
+    scatter('Bosque', val, trees, 0.011, c, scale=(2.6 * kt, 4.6 * kt), seed=500, tilt=0.05, sway=0.01)
+    scatter('Arbustos valle', val, shrubs, 0.02, c, scale=(2.5 * ks, 5.0 * ks), seed=501, sway=0.02)
     birds(c)
     return {}

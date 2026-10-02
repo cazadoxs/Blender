@@ -125,11 +125,17 @@ def build(main, ctx):
     px, py, pz = tunel.PUDDLE_DROP
     L = cfg.LOCO_FRONT
 
-    # 1. Gota: macro a ras del charco, la gota cae en el haz de luz
+    # 1. Gota: macro en la punta de la raíz; la gota se forma a contraluz, cae y la cámara la sigue
+    #    hasta el charco, donde se abren las ondas
+    from .vegetacion import DROP_ROOT_TIP
+    tz = DROP_ROOT_TIP[2] if DROP_ROOT_TIP else pz + 2.15
     cam, _ = rig(c, '01 Gota', [
-        (1, (px + 0.35, py - 1.0, 0.2), (px, py, pz + 0.04)),
-        (144, (px + 0.28, py - 0.82, 0.19), (px, py, pz + 0.06)),
-    ], lens=65, fstop=2.0, focus=None, shake=0.0015, seed=1)
+        (1, (px + 0.5, py - 1.35, tz - 0.32), (px, py, tz - 0.04)),
+        (58, (px + 0.46, py - 1.3, tz - 0.36), (px, py, tz - 0.05)),
+        (66, (px + 0.45, py - 1.28, tz - 0.45), (px, py, tz - 0.3)),
+        (84, (px + 0.4, py - 1.2, 0.42), (px, py, pz + 0.02)),
+        (144, (px + 0.34, py - 1.08, 0.36), (px, py, pz)),
+    ], lens=85, fstop=2.8, focus=None, shake=0.0012, seed=1)
     cams.append(cam)
 
     # 2. Vía: travelling a ras de los carriles hacia la locomotora
@@ -155,7 +161,7 @@ def build(main, ctx):
 
     # 5. Placa: frente de la locomotora, de la placa al farol
     cam, _ = rig(c, '05 Placa', [
-        (817, (0.55, L + 2.4, 1.95), (0.0, L - 0.92, 2.32)),
+        (817, (0.55, L + 2.4, 1.85), (0.0, L - 0.92, 2.15)),
         (936, (0.45, L + 2.1, 2.55), (0.0, L - 0.95, 3.55)),
     ], lens=50, fstop=2.0, focus=3.3, shake=0.003, seed=5)
     cams.append(cam)
@@ -167,12 +173,12 @@ def build(main, ctx):
         (1150, (0.25, 96.5, 2.5), (0.0, 140, 3.0)),
         (1235, (0.1, 110.0, 3.4), (0.0, 200, 1.0)),
         (1330, (-8.0, 130.0, 4.5), (0.0, 212, -8.0)),
-        (1450, (-55.0, 150.0, -4.0), (0.0, 214, -24.0)),
-        (1560, (-135.0, 162.0, -16.0), (0.0, 222, -30.0)),
+        (1450, (-95.0, 168.0, -14.0), (0.0, 222, -22.0)),
+        (1560, (-190.0, 196.0, -38.0), (0.0, 228, -26.0)),
     ], lens=24, fstop=5.6, focus=None, shake=0.0035, seed=6)
     # el foco va al objetivo de la grúa salvo dentro del túnel
     cam.data.dof.focus_object = None
-    for f, d in ((937, 8.0), (1150, 30.0), (1235, 60.0), (1450, 85.0), (1560, 150.0)):
+    for f, d in ((937, 8.0), (1150, 30.0), (1235, 60.0), (1450, 110.0), (1560, 190.0)):
         cam.data.dof.focus_distance = d
         cam.data.dof.keyframe_insert('focus_distance', frame=f)
     cams.append(cam)
@@ -188,8 +194,10 @@ def build(main, ctx):
     fill(c, 'Relleno via', (-1.5, 4.0, 0.6), (0, 25, 1.5), 2.5, 18, 145, 432)
     fill(c, 'Relleno locomotora', (-4.2, L - 4.0, 0.5), (0, L - 6.0, 2.0), 3.0, 30, 433, 672)
     fill(c, 'Relleno rueda', (-2.6, L - 7.5, 0.35), (-0.8, L - 6.5, 1.1), 1.5, 10, 673, 816)
-    fill(c, 'Relleno placa', (1.6, L + 2.6, 0.6), (0, L - 0.9, 2.6), 1.5, 9, 817, 936)
+    fill(c, 'Relleno placa', (1.6, L + 2.6, 0.6), (0, L - 0.9, 2.4), 1.5, 11, 817, 936)
     fill(c, 'Relleno gota', (px + 1.2, py - 0.6, 0.7), (px, py, pz), 0.8, 1.2, 1, 144)
+    # contraluz en la punta de la raíz: hace brillar la gota mientras se forma
+    fill(c, 'Contraluz raiz', (px - 0.45, py + 0.9, tz + 0.55), (px, py, tz - 0.05), 0.25, 3.0, 1, 144)
 
     # marcadores con cámara: cada plano corta en su fotograma
     for (name, f0, f1), cam in zip(SHOTS, cams):
@@ -199,7 +207,7 @@ def build(main, ctx):
 
     # exposición: dentro del túnel se abre el diafragma; al salir se cierra (como una cámara real)
     vs = scene.view_settings
-    expo = [(1, 0.7), (144, 0.7), (145, 2.0), (433, 1.9), (673, 2.0), (817, 1.9), (937, 1.9), (1100, 1.6),
+    expo = [(1, 1.5), (58, 1.5), (84, 0.8), (144, 0.7), (145, 2.0), (433, 1.9), (673, 2.0), (817, 1.9), (937, 1.9), (1100, 1.6),
             (EXIT_FRAMES[0], 1.1), (EXIT_FRAMES[1], 0.0), (1560, 0.0), (1561, 0.15), (1800, 0.15)]
     for f, e in expo:
         vs.exposure = e

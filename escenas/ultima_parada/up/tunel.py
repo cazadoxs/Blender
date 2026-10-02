@@ -514,7 +514,7 @@ def build(main_c):
     cut_c = coll('Cortes', main_c)
     brick = M.mat_ladrillo_tunel()
     soil = M.mat_generic('Tierra y hojas', 'tierra', 0.5, moss=0.45, wet=0.5, disp_scale=0.04)
-    rock = M.mat_generic('Roca acantilado', 'roca', 0.12, moss=0.5, disp_scale=0.35, bump=1.5)
+    rock = M.mat_generic('Roca acantilado', 'roca', 0.12, moss=0.5, disp_scale=0.35, bump=1.5, tint=(0.62, 0.62, 0.64))
     stone = M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55, disp_scale=0.0)
     top_m = M.mat_generic('Tierra monte', 'tierra', 0.35, moss=0.7, disp_scale=0.05)
     shell = tunnel_shell(c, brick)
@@ -522,7 +522,7 @@ def build(main_c):
     boolean_cut(shell, cutters)
     adaptive(shell)
     terrain_top(c, top_m, cutters)
-    massif(c, top_m)
+    massif(c, M.mat_paisaje('Monte', 0.1, disp_scale=0.15))
     for ct in cutters:
         bpy.data.objects.remove(ct)
     bpy.data.collections.remove(cut_c)

@@ -86,12 +86,13 @@ def volumes(c):
     b.display_type = 'BOUNDS'
     obs.append(b)
     # bruma general (perspectiva aérea) que se aclara con la altura
-    m = M.mat_volumen('Bruma', 0.00045, aniso=0.7, color=(0.95, 0.9, 0.85), height_falloff=(0.02, 0.45))
-    b = box('Volumen bruma', c, (9000, 8000, 1000), (0, 3000, 400), m)
+    # (la caja baja hasta -400 m para que el suelo no asome por debajo de la bruma con un corte duro)
+    m = M.mat_volumen('Bruma', 0.00038, aniso=0.7, color=(0.95, 0.9, 0.85), height_falloff=(0.246, 0.577))
+    b = box('Volumen bruma', c, (9000, 8000, 1300), (0, 3000, 250), m)
     b.display_type = 'BOUNDS'
     obs.append(b)
     # niebla en el fondo del valle
-    m = M.mat_volumen('Niebla valle', 0.012, aniso=0.6, color=(1, 0.98, 0.96), noise_scale=0.012, noise_amt=0.8,
+    m = M.mat_volumen('Niebla valle', 0.005, aniso=0.6, color=(1, 0.98, 0.96), noise_scale=0.012, noise_amt=0.8,
                       height_falloff=(0.0, 1.0))
     b = box('Volumen niebla', c, (2400, 900, 34), (0, 420, cfg.VALLEY_Z + 15), m)
     b.display_type = 'BOUNDS'

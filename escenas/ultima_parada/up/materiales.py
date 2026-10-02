@@ -221,6 +221,34 @@ def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None
     return m
 
 
+def mat_paisaje(name, scale=0.12, rock_tint=(0.62, 0.62, 0.64), disp_scale=0.0):
+    """Suelo de paisaje a gran escala: pradera y musgo mezclados con manchas grandes (para que no se
+    vea la repetición desde lejos), tierra seca en claros y roca en las pendientes fuertes."""
+    m, nb = new_material(name)
+    if nb is None:
+        return m
+    geo = nb.n('ShaderNodeNewGeometry')
+    pos = nb.out(geo, 'Position')
+    grass = texset(nb, 'pradera', coords(nb, scale), box=True, tint=(0.7, 0.92, 0.5))
+    moss = texset(nb, 'musgo', coords(nb, scale * 2.3), box=True, tint=(0.85, 1.0, 0.8))
+    dry = texset(nb, 'tierra', coords(nb, scale * 3.1), box=True, tint=(0.9, 0.85, 0.75))
+    rock = texset(nb, 'roca', coords(nb, scale * 0.6), box=True, tint=rock_tint, bump=1.4)
+    big = nb.out(nb.noise(pos, scale=0.012, detail=5, rough=0.6), 'Factor')
+    mid = nb.out(nb.noise(pos, scale=0.06, detail=4, rough=0.55), 'Factor')
+    s_ = mix_sets(nb, nb.maprange(mid, 0.42, 0.62), grass, moss)
+    s_ = mix_sets(nb, nb.maprange(big, 0.6, 0.7), s_, dry)
+    z = nb.out(nb.separate(nb.out(geo, 'Normal')), 'Z')
+    steep = nb.maprange(nb.math('ADD', z, nb.math('MULTIPLY', nb.math('SUBTRACT', mid, 0.5), 0.3)), 0.82, 0.68)
+    s_ = mix_sets(nb, steep, s_, rock)
+    # variación de brillo y tono a gran escala
+    var = nb.maprange(big, 0.3, 0.7, 0.7, 1.15)
+    col = nb.mix(1.0, s_.color, nb.combine(var, var, var), blend='MULTIPLY')
+    p = principled(nb, col, s_.rough, s_.normal)
+    disp = displacement(nb, s_.height, disp_scale) if (disp_scale > 0 and s_.height is not None) else None
+    output(nb, p, disp, m, 'BOTH' if disp is not None else 'BUMP')
+    return m
+
+
 def mat_metal_loco(name='Locomotora pintura', paint=(0.05, 0.09, 0.065)):
     """Chapa pintada (verde oscuro de ferrocarril) comida por el óxido, con musgo arriba."""
     m, nb = new_material(name)
