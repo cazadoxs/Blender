@@ -24,6 +24,10 @@ def _fix_images(root_dir):
 COMPOSITE = ('arbol', 'arbusto', 'helecho', 'tronco')   # cada archivo es una sola planta (varias piezas)
 
 
+import re
+HELPER = re.compile(r'geometry_nodes|geonodes|_geo$|_geo[._]|_geometry_')
+
+
 def _lod(name):
     import re
     m = re.search(r'lod[_ ]?(\d+)', name.lower())
@@ -41,6 +45,22 @@ def load_models(role):
         with bpy.data.libraries.load(path, link=False) as (src, dst):
             dst.objects = list(src.objects)
         obs = [o for o in dst.objects if o is not None]
+        # fuera los objetos auxiliares de Poly Haven: los que dispersan copias con nodos
+        # (instanciarlos miles de veces anida millones de instancias) y sus duplicados ocultos
+        junk = [o for o in obs if o.hide_render or HELPER.search(o.name.lower())]
+        if role == 'arbol':
+            ms = [o for o in obs if o.type == 'MESH' and o not in junk]
+            if ms:
+                big = max(ms, key=lambda o: len(o.data.polygons))
+                junk += [o for o in ms if o is not big]
+        obs = [o for o in obs if o not in junk]
+        for o in junk:
+            bpy.data.objects.remove(o)
+        for o in obs:
+            if len(o.modifiers):
+                print('      %s: quitando modificadores %s' % (o.name, [m.type for m in o.modifiers if m.type == 'NODES']))
+            for m in [m for m in o.modifiers if m.type == 'NODES']:
+                o.modifiers.remove(m)
         meshes = [o for o in obs if o.type == 'MESH']
         others = [o for o in obs if o.type != 'MESH']
         lods = [_lod(o.name) for o in meshes]
@@ -50,7 +70,7 @@ def load_models(role):
             for o in drop:
                 bpy.data.objects.remove(o)
             meshes = [o for o, l in zip(meshes, lods) if l is None or l == best]
-        print('    %s: %s' % (os.path.basename(path), ', '.join('%s(%d)' % (o.name, len(o.data.polygons)) for o in meshes)))
+        print('    %s: %s' % (os.path.basename(path), ', '.join('%s(%d, %.1fm)' % (o.name, len(o.data.polygons), max(o.dimensions)) for o in meshes)))
         groups.append((meshes, others))
         _fix_images(os.path.dirname(path))
     return groups
