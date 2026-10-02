@@ -42,6 +42,7 @@ def load_models(role):
             dst.objects = list(src.objects)
         obs = [o for o in dst.objects if o is not None]
         meshes = [o for o in obs if o.type == 'MESH']
+        others = [o for o in obs if o.type != 'MESH']
         lods = [_lod(o.name) for o in meshes]
         if any(l is not None for l in lods):
             best = min(l for l in lods if l is not None)
@@ -49,7 +50,6 @@ def load_models(role):
             for o in drop:
                 bpy.data.objects.remove(o)
             meshes = [o for o, l in zip(meshes, lods) if l is None or l == best]
-        others = [o for o in obs if o.type != 'MESH' and o.name in bpy.data.objects]
         print('    %s: %s' % (os.path.basename(path), ', '.join('%s(%d)' % (o.name, len(o.data.polygons)) for o in meshes)))
         groups.append((meshes, others))
         _fix_images(os.path.dirname(path))
