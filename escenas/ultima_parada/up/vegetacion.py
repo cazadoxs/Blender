@@ -40,7 +40,7 @@ def scatter(name, surface, lib, density, c, scale=(0.7, 1.3), seed=0, tilt=0.12,
     ci.inputs['Collection'].default_value = lib
     ci.inputs['Separate Children'].default_value = True
     ci.inputs['Reset Children'].default_value = True
-    n_items = max(1, len(lib.objects))
+    n_items = max(1, len(lib.objects) + len(lib.children))
     ridx = nb.n('FunctionNodeRandomValue', data_type='INT')
     NB._sock(ridx.inputs, 'Min_002').default_value = 0
     NB._sock(ridx.inputs, 'Max_002').default_value = n_items - 1
@@ -120,6 +120,10 @@ def light_amount(x, y, z=0.0):
         v = 1.0
     nz = noise.fractal(Vector((x * 0.35, y * 0.35, 3.3)), 0.6, 2.0, 3)
     v *= max(0.0, 0.8 + 0.9 * nz)
+    # el charco del primer plano queda despejado
+    hx, hy = tunel.HERO_PUDDLE
+    if (x - hx) ** 2 + ((y - hy) / 1.4) ** 2 < 1.6 ** 2:
+        return 0.0
     # junto a los muros crece más (menos pisado, más humedad)
     wall = max(0.0, (abs(x) - 2.3) / 2.0)
     return v * (0.7 + 0.6 * min(1.0, wall)) + 0.02
@@ -567,20 +571,20 @@ def build(main, ctx):
     seed = 10
     for o in floor_like:
         big = o.name.startswith('Suelo') or o.name.startswith('Escombros')
-        scatter('Hierba ' + o.name, o, libs['hierba'], 7.0 if big else 4.0, c, scale=(0.5, 1.1), seed=seed); seed += 7
+        scatter('Hierba ' + o.name, o, libs['hierba'], 12.0 if big else 5.0, c, scale=(0.5, 1.1), seed=seed); seed += 7
         scatter('Helechos ' + o.name, o, libs['helecho'], 1.1 if big else 0.25, c, scale=(0.5, 1.2), seed=seed); seed += 7
         scatter('Maleza ' + o.name, o, libs['maleza'], 1.4, c, scale=(0.6, 1.1), seed=seed); seed += 7
         if big:
             scatter('Arbustos ' + o.name, o, libs['arbusto'], 0.08, c, scale=(0.4, 0.9), seed=seed); seed += 7
             scatter('Piedras ' + o.name, o, libs['rocas'], 0.25, c, scale=(0.08, 0.3), seed=seed, sway=0, tilt=0.5); seed += 7
     if top:
-        scatter('Hierba monte', top, libs['hierba'], 9.0, c, scale=(0.7, 1.3), seed=101)
+        scatter('Hierba monte', top, libs['hierba'], 4.0, c, scale=(0.7, 1.3), seed=101)
         scatter('Arbustos monte', top, libs['arbusto'], 0.35, c, scale=(0.6, 1.4), seed=102)
         scatter('Helechos monte', top, libs['helecho'], 0.7, c, scale=(0.8, 1.4), seed=103)
         scatter('Maleza monte', top, libs['maleza'], 1.5, c, scale=(0.7, 1.2), seed=104)
     if cl:
-        scatter('Hierba acantilado', cl, libs['hierba'], 2.0, c, scale=(0.8, 1.5), seed=111, align=True, tilt=0.3)
-        scatter('Arbustos acantilado', cl, libs['arbusto'], 0.08, c, scale=(0.8, 1.8), seed=112, align=True, tilt=0.3)
+        scatter('Hierba acantilado', cl, libs['hierba'], 0.25, c, scale=(0.8, 1.5), seed=111, align=True, tilt=0.3)
+        scatter('Arbustos acantilado', cl, libs['arbusto'], 0.02, c, scale=(0.8, 1.8), seed=112, align=True, tilt=0.3)
 
     # vegetación sobre la locomotora: musgo/hierba en las superficies de arriba y helechos en el ténder
     loco = ctx.get('loco')

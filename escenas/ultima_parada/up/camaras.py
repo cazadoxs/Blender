@@ -92,7 +92,7 @@ def rig(c, name, keys, lens, fstop, focus, sensor=36.0, shake=0.004, seed=0):
     return cam, tgt
 
 
-def fill(c, name, loc, target, size, energy, f0, f1, color=(1.0, 0.78, 0.55)):
+def fill(c, name, loc, target, size, energy, f0, f1, color=(1.0, 0.86, 0.72)):
     """Luz de relleno invisible para la cámara (como un rebote o una pantalla en un rodaje real),
     encendida solo durante su plano."""
     ld = bpy.data.lights.new(name, 'AREA')
@@ -127,8 +127,8 @@ def build(main, ctx):
 
     # 1. Gota: macro a ras del charco, la gota cae en el haz de luz
     cam, _ = rig(c, '01 Gota', [
-        (1, (px - 0.5, py - 0.66, 0.47), (px, py, pz + 0.06)),
-        (144, (px - 0.4, py - 0.55, 0.45), (px, py, pz + 0.08)),
+        (1, (px + 0.35, py - 1.0, 0.2), (px, py, pz + 0.04)),
+        (144, (px + 0.28, py - 0.82, 0.19), (px, py, pz + 0.06)),
     ], lens=65, fstop=2.0, focus=None, shake=0.0015, seed=1)
     cams.append(cam)
 
@@ -166,13 +166,13 @@ def build(main, ctx):
         (1040, (0.35, L + 18, 2.35), (0.0, 110, 3.0)),
         (1150, (0.25, 96.5, 2.5), (0.0, 140, 3.0)),
         (1235, (0.1, 110.0, 3.4), (0.0, 200, 1.0)),
-        (1330, (-6.0, 132.0, 6.0), (0.0, 205, -5.0)),
-        (1450, (-30.0, 158.0, 8.0), (0.0, 214, -18.0)),
-        (1560, (-60.0, 176.0, 5.0), (0.0, 222, -28.0)),
+        (1330, (-8.0, 130.0, 4.5), (0.0, 212, -8.0)),
+        (1450, (-55.0, 150.0, -4.0), (0.0, 214, -24.0)),
+        (1560, (-135.0, 162.0, -16.0), (0.0, 222, -30.0)),
     ], lens=24, fstop=5.6, focus=None, shake=0.0035, seed=6)
     # el foco va al objetivo de la grúa salvo dentro del túnel
     cam.data.dof.focus_object = None
-    for f, d in ((937, 8.0), (1150, 30.0), (1235, 60.0), (1450, 70.0), (1560, 75.0)):
+    for f, d in ((937, 8.0), (1150, 30.0), (1235, 60.0), (1450, 85.0), (1560, 150.0)):
         cam.data.dof.focus_distance = d
         cam.data.dof.keyframe_insert('focus_distance', frame=f)
     cams.append(cam)
@@ -185,11 +185,11 @@ def build(main, ctx):
     cams.append(cam)
 
     # rellenos (rebote cálido del suelo iluminado)
-    fill(c, 'Relleno via', (-1.5, 4.0, 0.6), (0, 25, 1.5), 2.5, 120, 145, 432)
-    fill(c, 'Relleno locomotora', (-4.2, L - 4.0, 0.5), (0, L - 6.0, 2.0), 3.0, 220, 433, 672)
-    fill(c, 'Relleno rueda', (-2.6, L - 7.5, 0.35), (-0.8, L - 6.5, 1.1), 1.5, 70, 673, 816)
-    fill(c, 'Relleno placa', (1.6, L + 2.6, 0.6), (0, L - 0.9, 2.6), 1.5, 60, 817, 936)
-    fill(c, 'Relleno gota', (px - 0.9, py + 0.3, 0.9), (px, py, pz), 0.8, 8, 1, 144)
+    fill(c, 'Relleno via', (-1.5, 4.0, 0.6), (0, 25, 1.5), 2.5, 18, 145, 432)
+    fill(c, 'Relleno locomotora', (-4.2, L - 4.0, 0.5), (0, L - 6.0, 2.0), 3.0, 30, 433, 672)
+    fill(c, 'Relleno rueda', (-2.6, L - 7.5, 0.35), (-0.8, L - 6.5, 1.1), 1.5, 10, 673, 816)
+    fill(c, 'Relleno placa', (1.6, L + 2.6, 0.6), (0, L - 0.9, 2.6), 1.5, 9, 817, 936)
+    fill(c, 'Relleno gota', (px + 1.2, py - 0.6, 0.7), (px, py, pz), 0.8, 1.2, 1, 144)
 
     # marcadores con cámara: cada plano corta en su fotograma
     for (name, f0, f1), cam in zip(SHOTS, cams):
@@ -199,7 +199,7 @@ def build(main, ctx):
 
     # exposición: dentro del túnel se abre el diafragma; al salir se cierra (como una cámara real)
     vs = scene.view_settings
-    expo = [(1, 2.2), (145, 2.0), (433, 1.9), (673, 2.0), (817, 1.9), (937, 1.9), (1100, 1.6),
+    expo = [(1, 0.7), (144, 0.7), (145, 2.0), (433, 1.9), (673, 2.0), (817, 1.9), (937, 1.9), (1100, 1.6),
             (EXIT_FRAMES[0], 1.1), (EXIT_FRAMES[1], 0.0), (1560, 0.0), (1561, 0.15), (1800, 0.15)]
     for f, e in expo:
         vs.exposure = e

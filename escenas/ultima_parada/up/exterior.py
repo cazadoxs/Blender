@@ -87,7 +87,7 @@ def viaduct(c, stone, cut_c):
     parts = []
     r = rng(8)
     cor = box('Cornisa viaducto', c, (2 * HALF + 0.7, y1 - y0, 0.4), (0, (y0 + y1) / 2, -0.25), stone)
-    imp = [box('Imposta', c, (2 * HALF + 0.5, y1 - y0, 0.5), (0, (y0 + y1) / 2, z), stone) for z in (-29.25, -14.0, -42.0)]
+    imp = []
     # pretiles rotos a trozos
     pre = []
     for s in (-1, 1):
@@ -269,10 +269,8 @@ def build(main, ctx):
     if mon:
         set_density(mon, lambda x, y, z: max(0.0, min(1.0, 0.6 + noise.fractal(Vector((x / 90, y / 90, 2.2)), 0.6, 2.0, 3) * 1.3)))
         scatter('Bosque monte', mon, trees, 0.006, c, scale=(0.8, 1.6), seed=510, tilt=0.06, sway=0.015)
-        scatter('Arbustos monte lejos', mon, shrubs, 0.02, c, scale=(1.2, 2.4), seed=511, sway=0.02)
+        scatter('Arbustos monte lejos', mon, shrubs, 0.008, c, scale=(1.2, 2.4), seed=511, sway=0.02)
     scatter('Bosque', val, trees, 0.0065, c, scale=(0.8, 1.5), seed=500, tilt=0.06, sway=0.015)
-    scatter('Arbustos valle', val, shrubs, 0.03, c, scale=(1.0, 2.2), seed=501, sway=0.02)
-    lib_h = P.library('hierba', P.grass)
-    scatter('Hierba valle', val, lib_h, 0.5, c, scale=(1.0, 1.8), seed=502)
+    scatter('Arbustos valle', val, shrubs, 0.012, c, scale=(1.0, 2.2), seed=501, sway=0.02)
     birds(c)
     return {}

@@ -21,41 +21,67 @@ def _fix_images(root_dir):
                     break
 
 
+COMPOSITE = ('arbol', 'arbusto', 'helecho', 'tronco')   # cada archivo es una sola planta (varias piezas)
+
+
+def _lod(name):
+    import re
+    m = re.search(r'lod[_ ]?(\d+)', name.lower())
+    return int(m.group(1)) if m else None
+
+
 def load_models(role):
+    """Devuelve una lista de grupos (uno por archivo): cada grupo es una lista de objetos."""
     items = MAN.get('modelos', {}).get(role, [])
-    obs = []
+    groups = []
     for it in items:
         path = res_path(it['blend'])
         if not os.path.exists(path):
             continue
         with bpy.data.libraries.load(path, link=False) as (src, dst):
             dst.objects = list(src.objects)
-        for o in dst.objects:
-            if o is None or o.type != 'MESH':
-                continue
-            obs.append(o)
+        obs = [o for o in dst.objects if o is not None]
+        meshes = [o for o in obs if o.type == 'MESH']
+        lods = [_lod(o.name) for o in meshes]
+        if any(l is not None for l in lods):
+            best = min(l for l in lods if l is not None)
+            drop = [o for o, l in zip(meshes, lods) if l is not None and l != best]
+            for o in drop:
+                bpy.data.objects.remove(o)
+            meshes = [o for o, l in zip(meshes, lods) if l is None or l == best]
+        others = [o for o in obs if o.type != 'MESH' and o.name in bpy.data.objects]
+        print('    %s: %s' % (os.path.basename(path), ', '.join('%s(%d)' % (o.name, len(o.data.polygons)) for o in meshes)))
+        groups.append((meshes, others))
         _fix_images(os.path.dirname(path))
-    return obs
+    return groups
 
 
 def library(role, fallback, n_fallback=3):
-    """Colección oculta con las variantes de un papel, con el origen en la base."""
+    """Colección oculta con las variantes de un papel (para instanciar con nodos)."""
     if role in LIB:
         return LIB[role]
     c = hidden_coll('LIB ' + role)
-    obs = load_models(role)
-    if obs:
-        for o in obs:
-            c.objects.link(o)
-            o.parent = None
-            o.location = (0, 0, 0)
-            o.rotation_euler = (0, 0, 0)
-            # algunos modelos traen varias LOD: se queda solo la de más detalle
-        names = [o.name for o in obs]
-        for o in list(obs):
-            if any(k in o.name.lower() for k in ('lod1', 'lod2', 'lod3', '_lod_1', 'lod_2')):
-                bpy.data.objects.remove(o)
-        print('  %s: %d modelos escaneados' % (role, len([o for o in c.objects])))
+    groups = load_models(role)
+    if groups:
+        n = 0
+        for k, (meshes, others) in enumerate(groups):
+            if role in COMPOSITE:
+                sub = bpy.data.collections.new('%s %d' % (role, k))
+                c.children.link(sub)
+                for o in meshes + others:
+                    sub.objects.link(o)
+                n += 1
+            else:
+                for o in meshes:
+                    mw = o.matrix_world.copy()
+                    o.parent = None
+                    o.matrix_world = mw
+                    o.location = (0, 0, 0)
+                    c.objects.link(o)
+                    n += 1
+                for o in others:
+                    bpy.data.objects.remove(o)
+        print('  %s: %d modelos escaneados' % (role, n))
     else:
         for i in range(n_fallback):
             o = fallback(i)

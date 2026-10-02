@@ -90,6 +90,16 @@ if 'camaras' in PARTES:
     }
     json.dump(timing, open(os.path.join(HERE, 'timing.json'), 'w'), indent=1, ensure_ascii=False)
 
+# recuento de instancias (para vigilar memoria)
+dg = bpy.context.evaluated_depsgraph_get()
+cnt = {}
+for inst in dg.object_instances:
+    if inst.is_instance and inst.parent:
+        cnt[inst.parent.name] = cnt.get(inst.parent.name, 0) + 1
+print('Instancias: %d en total' % sum(cnt.values()))
+for k, v in sorted(cnt.items(), key=lambda kv: -kv[1])[:12]:
+    print('   %-40s %d' % (k, v))
+
 step('Guardando')
 bpy.ops.file.make_paths_relative() if bpy.data.filepath else None
 bpy.ops.wm.save_as_mainfile(filepath=A.salida, relative_remap=True)

@@ -104,10 +104,17 @@ def noisy_polygon(cx, cy, rx, ry, seed, n=48, rough=0.28):
     return pts
 
 
-def prism(name, pts, z0, z1, c):
+def prism(name, pts, z0, z1, c, slant_zc=None):
+    """Prisma vertical, o inclinado según la dirección del sol si slant_zc (altura de referencia)."""
     bm = bmesh.new()
-    bot = [bm.verts.new((x, y, z0)) for x, y in pts]
-    top = [bm.verts.new((x, y, z1)) for x, y in pts]
+
+    def at(x, y, z):
+        if slant_zc is None:
+            return (x, y, z)
+        k = (z - slant_zc) / cfg.SUN_DIR.z
+        return (x + cfg.SUN_DIR.x * k, y + cfg.SUN_DIR.y * k, z)
+    bot = [bm.verts.new(at(x, y, z0)) for x, y in pts]
+    top = [bm.verts.new(at(x, y, z1)) for x, y in pts]
     bm.faces.new(bot[::-1])
     bm.faces.new(top)
     n = len(pts)
@@ -117,13 +124,14 @@ def prism(name, pts, z0, z1, c):
     return bm_obj(bm, name, c)
 
 
+HERO_PUDDLE = (-3.0, 9.2)   # charco donde cae la gota del primer plano
 HOLES = []   # (nombre, polígono, centro)
 TARGETS = []  # puntos donde cae el sol que entra por cada hundimiento
 
 
 def make_holes(cut_coll):
     specs = [
-        ('Hundimiento 1', (-0.2, 9.2, 0.3), 1.5, 2.1, 11),
+        ('Hundimiento 1', (HERO_PUDDLE[0] + 0.3, HERO_PUDDLE[1], 0.1), 1.5, 2.1, 11),
         ('Hundimiento 3', (1.4, -8.0, 0.25), 1.1, 1.6, 13),
     ]
     cutters = []
@@ -139,8 +147,10 @@ def make_holes(cut_coll):
     y_hi = h.y + 2.0
     pts = noisy_polygon(0.15, (y_lo + y_hi) / 2, 2.7, (y_hi - y_lo) / 2, 12, n=64, rough=0.22)
     HOLES.append(('Hundimiento 2', pts, (0.15, (y_lo + y_hi) / 2)))
-    for name, pts, _ in HOLES:
+    for name, pts, (hx, hy) in HOLES:
+        zc = cfg.vault_z(hx)
         cutters.append(prism('Corte ' + name, pts, WALL_H + 0.6, 40.0, cut_coll))
+        cutters.append(prism('Corte sol ' + name, pts, zc - 0.6, 40.0, cut_coll, slant_zc=zc))
     return cutters
 
 
@@ -217,7 +227,15 @@ def terrain_top(c, mat, cutters):
         y = Y0 - 10 + (cfg.Y1 + 1.5 - (Y0 - 10)) * v
         return (x, y, top_z(x, y))
     ob = grid_mesh('Terreno sobre el tunel', 120, 282, f, c, uvscale=4.0, mat=mat)
-    delete_faces(ob, lambda p: any(point_in_poly(p.x, p.y, pts) for _, pts, _ in HOLES))
+    def in_hole(p):
+        for _, pts, (hx, hy) in HOLES:
+            if point_in_poly(p.x, p.y, pts):
+                return True
+            k = (p.z - cfg.vault_z(hx)) / cfg.SUN_DIR.z
+            if point_in_poly(p.x - cfg.SUN_DIR.x * k, p.y - cfg.SUN_DIR.y * k, pts):
+                return True
+        return False
+    delete_faces(ob, in_hole)
     adaptive(ob)
     return ob
 
@@ -227,10 +245,14 @@ def cliff_y(x, z):
     """Posición Y de la pared del acantilado (la boca está en y=100)."""
     lean = (-z) * 0.07 if z < 0 else -z * 0.12
     near = min(1.0, max(0.0, (abs(x) - 7.5) / 10.0)) if z < 13 else 1.0
-    amp = 0.25 + 3.2 * near
-    n = noise.fractal(Vector((x * 0.035, z * 0.035, 4.2)), 0.55, 2.0, 5)
-    n2 = noise.fractal(Vector((x * 0.008, z * 0.01, 8.1)), 0.5, 2.0, 2)
-    return Y1 + lean + n * amp + n2 * 8 * near
+    amp = 0.25 + 5.5 * near
+    n = noise.fractal(Vector((x * 0.035, z * 0.035, 4.2)), 0.55, 2.0, 6)
+    n2 = noise.fractal(Vector((x * 0.008, z * 0.01, 8.1)), 0.5, 2.0, 3)
+    # estratos: repisas horizontales de roca
+    zz = z + noise.noise(Vector((x * 0.01, 0.5, 3.0))) * 6.0
+    strata = (zz / 7.0) % 1.0
+    ledge = (strata ** 3) * 3.5 * near
+    return Y1 + lean + n * amp + n2 * 16 * near + ledge
 
 
 def cliff(c, mat):
@@ -238,7 +260,7 @@ def cliff(c, mat):
     zs = np.linspace(cfg.VALLEY_Z - 8, 1, 1)
     verts, faces, uvs = [], [], []
     rows = []
-    NZ = 90
+    NZ = 140
     for i, x in enumerate(xs):
         ztop = top_z(x, Y1)
         col = []
@@ -441,14 +463,14 @@ def puddles(c, mat, sleeper_ys):
         vs = [bm.verts.new((px, py, 0.045)) for px, py in pts]
         bm.faces.new(vs)
         obs.append(bm_obj(bm, 'Charco', c, mat))
-    # charco del plano de la gota: entre dos traviesas, entre los carriles
-    yd = min(sleeper_ys, key=lambda s: abs(s - 9.2 - 0.325)) + 0.325 if sleeper_ys else 9.5
-    pts = noisy_polygon(-0.15, yd, 0.62, 0.19, 77, n=40, rough=0.12)
+    # charco del plano de la gota: en el suelo de tierra, junto al muro izquierdo
+    hx, hy = HERO_PUDDLE
+    pts = noisy_polygon(hx, hy, 0.75, 1.3, 77, n=48, rough=0.18)
     bm = bmesh.new()
-    vs = [bm.verts.new((px, py, cfg.BALLAST_TOP + 0.035)) for px, py in pts]
+    vs = [bm.verts.new((px, py, 0.085)) for px, py in pts]
     bm.faces.new(vs)
     ob = bm_obj(bm, 'Charco gota', c, mat)
-    PUDDLE_DROP = (-0.2, yd, cfg.BALLAST_TOP + 0.035)
+    PUDDLE_DROP = (hx, hy, 0.085)
     obs.append(ob)
     return obs
 

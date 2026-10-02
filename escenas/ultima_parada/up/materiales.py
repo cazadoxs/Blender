@@ -10,7 +10,7 @@ FALLBACK = {
     'roca': ((0.24, 0.22, 0.19), (0.12, 0.11, 0.10), 0.9),
     'balasto': ((0.20, 0.19, 0.17), (0.09, 0.085, 0.08), 0.9),
     'tierra': ((0.10, 0.065, 0.035), (0.05, 0.04, 0.02), 0.9),
-    'musgo': ((0.06, 0.12, 0.018), (0.03, 0.07, 0.01), 0.85),
+    'musgo': ((0.045, 0.065, 0.02), (0.025, 0.035, 0.012), 0.85),
     'oxido': ((0.23, 0.08, 0.025), (0.11, 0.04, 0.015), 0.8),
     'metal_pintado': ((0.05, 0.09, 0.06), (0.03, 0.05, 0.035), 0.55),
     'madera': ((0.14, 0.11, 0.08), (0.07, 0.055, 0.04), 0.85),
@@ -63,6 +63,26 @@ def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=N
             if normal is not None:
                 nb.set(b.inputs['Normal'], normal)
             normal = nb.out(b)
+    elif role in ('ladrillo', 'sillar'):
+        big = role == 'sillar'
+        br = nb.n('ShaderNodeTexBrick', offset=0.5, squash=1.0)
+        nb.set(br.inputs['Vector'], vec)
+        base, var, r = FALLBACK[role]
+        n1 = nb.noise(vec, scale=4.0, detail=6.0)
+        dark = tuple(max(0.0, b - v) for b, v in zip(base, var))
+        light = tuple(b + v for b, v in zip(base, var))
+        nb.set(br.inputs['Color1'], nb.mix(nb.out(n1, 'Factor'), dark, light))
+        nb.set(br.inputs['Color2'], base)
+        nb.set(br.inputs['Mortar'], (0.12, 0.11, 0.1))
+        br.inputs['Scale'].default_value = 1.0
+        br.inputs['Mortar Size'].default_value = 0.003 if not big else 0.006
+        br.inputs['Brick Width'].default_value = 0.08 if not big else 0.3
+        br.inputs['Row Height'].default_value = 0.025 if not big else 0.15
+        color = nb.out(br, 'Color')
+        rough = nb.maprange(nb.out(n1, 'Factor'), 0.3, 0.7, r - 0.1, r + 0.08)
+        height = nb.math('SUBTRACT', 1.0, nb.out(br, 'Fac'))
+        height = nb.math('ADD', nb.math('MULTIPLY', height, 0.7), nb.math('MULTIPLY', nb.out(n1, 'Factor'), 0.3))
+        normal = nb.out(nb.n('ShaderNodeBump', {'Height': height, 'Strength': 0.6 * bump, 'Distance': bump_dist}))
     else:
         base, var, r = FALLBACK.get(role, ((0.3, 0.3, 0.3), (0.1, 0.1, 0.1), 0.8))
         n1 = nb.noise(vec, scale=3.0, detail=8.0, rough=0.62, w=seed)

@@ -10,9 +10,9 @@ on:
         description: Fotogramas a renderizar
         default: '72,288,552,744,876,1050,1190,1300,1450,1560,1700'
       ancho:
-        default: '960'
+        default: '768'
       muestras:
-        default: '32'
+        default: '24'
   push:
     branches: [claude/corto-cinematografico-hw4xqq]
     paths: ['escenas/ultima_parada/**', '.github/workflows/ultima_parada.yml']
@@ -46,9 +46,9 @@ jobs:
       - name: Descargar recursos
         run: python descargar_recursos.py --max-res 1k 2>&1 | tee descarga.log
       - name: Construir escena
-        run: python -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
+        run: python -u -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
       - name: Renderizar pruebas
-        run: python prueba_nube.py --frames "${{ inputs.frames || '72,288,552,744,876,1050,1190,1300,1450,1560,1700' }}" --ancho "${{ inputs.ancho || '960' }}" --muestras "${{ inputs.muestras || '32' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
+        run: python -u prueba_nube.py --frames "${{ inputs.frames || '72,288,552,744,876,1050,1190,1300,1450,1560,1700' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
       - name: Publicar en la rama pruebas-ultima-parada
         if: always()
         run: |
