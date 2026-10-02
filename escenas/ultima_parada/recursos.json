@@ -1,0 +1,25 @@
+{
+ "texturas": {
+  "ladrillo": {"res": "4k", "candidatos": ["castle_brick_02_red", "castle_brick_07", "red_brick_03", "castle_brick_01"], "palabras": ["brick", "old", "dirty"], "evitar": ["floor", "painted", "white"], "ambientcg": ["Bricks076", "Bricks059"]},
+  "sillar": {"res": "4k", "candidatos": ["castle_wall_slates", "medieval_blocks_02", "stone_wall", "castle_wall_varriation"], "palabras": ["stone wall", "blocks", "castle", "masonry"], "evitar": ["floor", "tiles"], "ambientcg": ["Bricks061", "PavingStones070"]},
+  "roca": {"res": "4k", "candidatos": ["rock_face", "cliff_side", "rock_wall_08", "rock_wall_10", "aerial_rocks_02"], "palabras": ["rock", "cliff", "rock wall"], "evitar": ["floor", "tiles", "concrete"], "ambientcg": ["Rock030", "Rock035"]},
+  "balasto": {"res": "4k", "candidatos": ["gravel_floor_02", "rocks_ground_02", "gravel_floor", "gravel_road"], "palabras": ["gravel", "pebbles", "stones ground"], "evitar": ["concrete", "wall"], "ambientcg": ["Gravel040", "Gravel022"]},
+  "tierra": {"res": "2k", "candidatos": ["forest_leaves_02", "forrest_ground_01", "brown_mud_leaves_01", "forest_ground_04"], "palabras": ["forest ground", "leaves", "mud"], "evitar": ["wall"], "ambientcg": ["Ground037", "Ground048"]},
+  "musgo": {"res": "2k", "candidatos": ["mossy_rock", "moss_floor", "forest_moss"], "palabras": ["moss", "mossy"], "evitar": ["brick", "wall", "cobble"], "ambientcg": ["Moss002", "Moss001"]},
+  "oxido": {"res": "4k", "candidatos": ["rust_coarse_01", "rusty_metal_02", "rusty_metal_04", "rusty_metal_03"], "palabras": ["rust", "rusty", "corroded"], "evitar": ["painted"], "ambientcg": ["Rust004", "Metal049A"]},
+  "metal_pintado": {"res": "4k", "candidatos": ["green_metal_rust", "painted_metal_02", "blue_metal_plate", "metal_plate_02"], "palabras": ["painted metal", "chipped paint", "metal plate"], "evitar": ["floor", "grid"], "ambientcg": ["PaintedMetal009", "PaintedMetal006"]},
+  "madera": {"res": "2k", "candidatos": ["weathered_brown_planks", "old_planks_02", "wood_planks_grey", "rough_wood"], "palabras": ["planks", "weathered wood", "old wood"], "evitar": ["floor", "parquet", "table"], "ambientcg": ["Wood049", "Planks023A"]},
+  "corteza": {"res": "2k", "candidatos": ["bark_willow_02", "bark_brown_02", "bark_willow", "pine_bark"], "palabras": ["bark", "tree bark"], "evitar": [], "ambientcg": ["Bark007", "Bark012"]},
+  "pradera": {"res": "4k", "candidatos": ["aerial_grass_rock", "rocky_terrain_02", "aerial_rocks_04", "coast_sand_rocks_02"], "palabras": ["aerial", "grass", "terrain"], "evitar": ["wall", "brick"], "ambientcg": ["Grass004", "Ground054"]}
+ },
+ "modelos": {
+  "helecho": {"n": 2, "res": "2k", "candidatos": ["fern_02", "fern_01"], "palabras": ["fern"], "evitar": []},
+  "hierba": {"n": 3, "res": "2k", "candidatos": ["grass_medium_01", "grass_medium_02", "grass_bermuda_01"], "palabras": ["grass"], "evitar": ["field"]},
+  "arbusto": {"n": 3, "res": "2k", "candidatos": ["shrub_01", "shrub_02", "shrub_04", "shrub_03"], "palabras": ["shrub", "bush"], "evitar": ["dead", "pot"]},
+  "maleza": {"n": 3, "res": "2k", "candidatos": ["dandelion_01", "nettle_plant", "celandine_01", "periwinkle_plant"], "palabras": ["weed", "flower", "plant"], "evitar": ["pot", "vase", "dead"]},
+  "rocas": {"n": 2, "res": "2k", "candidatos": ["rock_moss_set_01", "rock_moss_set_02", "namaqualand_boulder_02", "boulder_01"], "palabras": ["rock", "boulder", "moss"], "evitar": ["cliff"]},
+  "arbol": {"n": 3, "res": "1k", "candidatos": ["island_tree_01", "island_tree_02", "island_tree_03", "fir_tree_01", "pine_tree_01"], "palabras": ["tree"], "evitar": ["dead", "stump", "palm", "pot"]},
+  "tronco": {"n": 1, "res": "2k", "candidatos": ["dead_tree_trunk", "tree_stump_01", "dead_tree_trunk_02"], "palabras": ["stump", "trunk", "log"], "evitar": []}
+ },
+ "hdri": {"res": "8k", "candidatos": ["belfast_sunset_puresky", "qwantani_dusk_2_puresky", "kloofendal_48d_partly_cloudy_puresky", "the_sky_is_on_fire"], "palabras": ["sunset", "puresky", "golden hour", "dusk"], "evitar": ["indoor", "studio", "night"]}
+}

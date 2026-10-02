@@ -1,0 +1,64 @@
+name: Ultima parada - prueba con recursos reales
+
+# Descarga las texturas y modelos escaneados (Poly Haven / ambientCG) a 1k,
+# construye la escena y renderiza un fotograma de cada plano a baja resolución
+# con la CPU. Las imágenes y el registro se publican en la rama pruebas-ultima-parada.
+on:
+  workflow_dispatch:
+    inputs:
+      frames:
+        description: Fotogramas a renderizar
+        default: '72,288,552,744,876,1050,1190,1300,1450,1560,1700'
+      ancho:
+        default: '960'
+      muestras:
+        default: '32'
+  push:
+    branches: [claude/corto-cinematografico-hw4xqq]
+    paths: ['escenas/ultima_parada/**', '.github/workflows/ultima_parada.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ultima-parada
+  cancel-in-progress: true
+
+jobs:
+  prueba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        working-directory: escenas/ultima_parada
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender (bpy 5.0)
+        run: pip install bpy==5.0.0 numpy
+      - uses: actions/cache@v4
+        with:
+          path: escenas/ultima_parada/recursos
+          key: recursos-1k-${{ hashFiles('escenas/ultima_parada/recursos.json') }}
+          restore-keys: recursos-1k-
+      - name: Descargar recursos
+        run: python descargar_recursos.py --max-res 1k 2>&1 | tee descarga.log
+      - name: Construir escena
+        run: python -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
+      - name: Renderizar pruebas
+        run: python prueba_nube.py --frames "${{ inputs.frames || '72,288,552,744,876,1050,1190,1300,1450,1560,1700' }}" --ancho "${{ inputs.ancho || '960' }}" --muestras "${{ inputs.muestras || '32' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
+      - name: Publicar en la rama pruebas-ultima-parada
+        if: always()
+        run: |
+          mkdir -p /tmp/pub && cp -r pruebas /tmp/pub/ 2>/dev/null || true
+          cp descarga.log construir.log render.log timing.json /tmp/pub/ 2>/dev/null || true
+          cp recursos/manifiesto.json /tmp/pub/ 2>/dev/null || true
+          cd /tmp/pub
+          git init -q -b pruebas-ultima-parada
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          echo "Prueba de ${GITHUB_SHA} ($(date -u))" > LEEME.txt
+          git add -A && git commit -qm "Pruebas de render ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" pruebas-ultima-parada
