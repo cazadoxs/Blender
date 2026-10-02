@@ -8,7 +8,7 @@ on:
     inputs:
       frames:
         description: Fotogramas a renderizar
-        default: '72,288,552,744,876,1050,1190,1300,1450,1560,1700'
+        default: '40,90,288,552,744,820,1050,1190,1300,1450,1560,1700'
       ancho:
         default: '768'
       muestras:
@@ -48,7 +48,7 @@ jobs:
       - name: Construir escena
         run: python -u -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
       - name: Renderizar pruebas
-        run: python -u prueba_nube.py --frames "${{ inputs.frames || '72,288,552,744,876,1050,1190,1300,1450,1560,1700' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
+        run: python -u prueba_nube.py --frames "${{ inputs.frames || '40,90,288,552,744,820,1050,1190,1300,1450,1560,1700' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
       - name: Publicar en la rama pruebas-ultima-parada
         if: always()
         run: |
