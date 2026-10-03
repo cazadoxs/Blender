@@ -1,0 +1,7 @@
+recursos/
+render/
+pruebas/
+*.blend
+*.blend1
+*.mp4
+__pycache__/

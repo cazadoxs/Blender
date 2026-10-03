@@ -1,0 +1,54 @@
+{
+ "fps": 24,
+ "frames": 1800,
+ "duracion": 75.0,
+ "planos": [
+  {
+   "nombre": "01 Gota",
+   "inicio": 0.0,
+   "fin": 6.0
+  },
+  {
+   "nombre": "02 Via",
+   "inicio": 6.0,
+   "fin": 18.0
+  },
+  {
+   "nombre": "03 Locomotora",
+   "inicio": 18.0,
+   "fin": 28.0
+  },
+  {
+   "nombre": "04 Rueda",
+   "inicio": 28.0,
+   "fin": 34.0
+  },
+  {
+   "nombre": "05 Placa",
+   "inicio": 34.0,
+   "fin": 39.0
+  },
+  {
+   "nombre": "06 Hacia la luz",
+   "inicio": 39.0,
+   "fin": 65.0
+  },
+  {
+   "nombre": "07 Ultima parada",
+   "inicio": 65.0,
+   "fin": 75.0
+  }
+ ],
+ "gotas": [
+  3.2870636196721383
+ ],
+ "salida_tunel": [
+  47.875,
+  51.416666666666664
+ ],
+ "pajaros": 52.041666666666664,
+ "titulo": [
+  66.5,
+  73.6
+ ]
+}
