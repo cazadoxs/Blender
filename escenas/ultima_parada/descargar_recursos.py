@@ -149,7 +149,11 @@ def ph_texture(aid, res):
         maps[name] = download(url, p)
     if 'color' not in maps:
         raise RuntimeError('sin mapa de color')
-    return {'id': aid, 'fuente': 'polyhaven', 'mapas': maps}
+    out = {'id': aid, 'fuente': 'polyhaven', 'mapas': maps}
+    dim = ph_assets('textures').get(aid, {}).get('dimensions')
+    if dim:
+        out['dim_mm'] = dim       # tamaño real del mosaico (ancho, alto) en milímetros
+    return out
 
 
 def ph_model(aid, res):
@@ -241,6 +245,11 @@ def main():
         json.dump(rel(man), open(man_path, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
 
     if 'texturas' in SOLO:
+        # catálogo de texturas (nombre, categorías, etiquetas y tamaño real) para elegir con criterio
+        cat = {a: {'cat': i.get('categories', []), 'tags': i.get('tags', []), 'dim_mm': i.get('dimensions')}
+               for a, i in ph_assets('textures').items()}
+        if cat:
+            json.dump(cat, open(os.path.join(OUT, 'catalogo_texturas.json'), 'w', encoding='utf-8'), indent=0)
         for name, role in CAT['texturas'].items():
             res = role.get('res', A.res)
             print('Textura [%s]' % name, flush=True)

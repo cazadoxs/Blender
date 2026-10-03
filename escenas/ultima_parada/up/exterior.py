@@ -238,7 +238,8 @@ def build(main, ctx):
     cut_c = coll('Cortes viaducto', main)
     tmats = ctx.get('tunel', {})
     stone = tmats.get('stone') or M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55)
-    stone_v = M.mat_generic('Sillar viaducto', 'sillar', 0.3, moss=0.6, disp_scale=0.0, bump=1.5)
+    stone_v = M.mat_generic('Sillar viaducto', 'sillar', 0.3, moss=0.6, disp_scale=0.0, bump=1.5,
+                            weather=1.0, weather_z=(0.0, -75.0), real=1.4)
     viaduct(c, stone_v, cut_c)
     # vía sobre el viaducto: hasta el hundimiento (con los carriles colgando) y después del hueco
     mats = (tmats.get('rail') or M.mat_rail(), tmats.get('wood') or M.mat_generic('Madera traviesas', 'madera', 0.8),

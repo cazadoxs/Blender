@@ -23,6 +23,9 @@ def has(role):
     return role in MAN.get('texturas', {})
 
 
+STRUCTURED = ('ladrillo', 'sillar', 'madera', 'metal_pintado')
+
+
 class TexSet:
     """Sockets de un conjunto PBR: color, rough, height y normal (vector)."""
 
@@ -30,20 +33,40 @@ class TexSet:
         self.color, self.rough, self.height, self.normal, self.ao = color, rough, height, normal, ao
 
 
-def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=None, seed=0.0):
-    """Crea los nodos de un juego de texturas. vec: vector de coordenadas ya escalado."""
+def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=None, seed=0.0,
+           antitile=True, macro=0.18):
+    """Crea los nodos de un juego de texturas. vec: vector de coordenadas ya escalado.
+    antitile: mezcla dos lecturas de la textura (girada y desplazada) con una máscara de ruido
+    para que no se vea la repetición del mosaico. macro: variación de brillo a gran escala."""
     info = MAN.get('texturas', {}).get(role)
     if info:
         mp = info['mapas']
+        if antitile:
+            if role in STRUCTURED:
+                # hiladas de piedra, ladrillo o tablas: se desplaza medio mosaico en horizontal sin girar
+                # ni escalar, para que las juntas sigan alineadas
+                vec_b = nb.out(nb.n('ShaderNodeMapping', {'Vector': vec, 'Location': (0.5, 0.5, 0.0)}))
+            else:
+                vec_b = nb.out(nb.n('ShaderNodeMapping', {'Vector': vec, 'Location': (0.37 + seed, 0.71, 0.13),
+                                                          'Rotation': (0, 0, 0.61), 'Scale': (0.79, 0.79, 0.79)}))
+            # parches de unos tres mosaicos, con borde corto para que no se vea "doble"
+            nt = nb.out(nb.noise(vec, scale=0.33, detail=2, rough=0.5, w=seed), 'Factor')
+            at_mask = nb.maprange(nt, 0.47, 0.53)
 
-        def tex(key, noncolor):
+        def sample(key, noncolor, v):
             node = nb.n('ShaderNodeTexImage', image=image(mp[key], noncolor),
                         interpolation='Cubic' if key == 'disp' else 'Linear')
             if box:
                 node.projection = 'BOX'
                 node.projection_blend = blend
-            nb.set(node.inputs['Vector'], vec)
+            nb.set(node.inputs['Vector'], v)
             return nb.out(node, 'Color')
+
+        def tex(key, noncolor):
+            a = sample(key, noncolor, vec)
+            if not antitile or key == 'normal':
+                return a
+            return nb.mix(at_mask, a, sample(key, noncolor, vec_b))
 
         color = tex('color', False)
         if 'ao' in mp:
@@ -54,7 +77,7 @@ def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=N
             rough = nb.out(nb.n('ShaderNodeRGBToBW', {0: rough}))
         height = nb.out(nb.n('ShaderNodeRGBToBW', {0: tex('disp', True)})) if 'disp' in mp else None
         normal = None
-        if 'normal' in mp and not box:
+        if 'normal' in mp and not box and not antitile:
             nm = nb.n('ShaderNodeNormalMap', {'Color': tex('normal', True), 'Strength': 1.0})
             normal = nb.out(nm)
         if height is not None:
@@ -95,6 +118,10 @@ def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=N
         rough = nb.maprange(nb.out(n2, 'Factor'), 0.3, 0.7, r - 0.1, min(1.0, r + 0.1))
         height = nb.math('ADD', nb.math('MULTIPLY', nb.out(vor, 'Distance'), 0.4), nb.math('MULTIPLY', f, 0.6))
         normal = nb.out(nb.n('ShaderNodeBump', {'Height': height, 'Strength': 0.5 * bump, 'Distance': bump_dist}))
+    if macro > 0:
+        mv = nb.out(nb.noise(vec, scale=0.06, detail=3, rough=0.55, w=seed + 3.0), 'Factor')
+        k = nb.maprange(mv, 0.3, 0.7, 1.0 - macro, 1.0 + macro * 0.6)
+        color = nb.mix(1.0, color, nb.combine(k, k, k), blend='MULTIPLY')
     if tint is not None:
         color = nb.mix(1.0, color, tint, blend='MULTIPLY')
     return TexSet(color, rough, height, normal)
@@ -192,12 +219,35 @@ def mat_ladrillo_tunel():
     return m
 
 
+def weathering(nb, color, strength=1.0, top=0.0, bottom=-60.0):
+    """Envejecimiento de fábrica a la intemperie: chorreones oscuros de agua de lluvia que bajan desde
+    la coronación, manchas de líquenes claros y suciedad irregular. top/bottom: cotas (m) de la obra."""
+    geo = nb.n('ShaderNodeNewGeometry')
+    pos = nb.out(geo, 'Position')
+    stretched = nb.out(nb.n('ShaderNodeMapping', {'Vector': pos, 'Scale': (0.55, 0.55, 0.035)}))
+    st = nb.out(nb.noise(stretched, scale=1.0, detail=4, rough=0.6), 'Factor')
+    z = nb.out(nb.separate(pos), 'Z')
+    bias = nb.maprange(z, bottom, top - 0.5, 0.35, 1.0)
+    streak = nb.math('MULTIPLY', nb.maprange(st, 0.5, 0.68), bias)
+    color = nb.mix(nb.math('MULTIPLY', streak, 0.55 * strength), color, (0.035, 0.032, 0.028))
+    li = nb.out(nb.noise(pos, scale=0.9, detail=5, rough=0.62, w=7.0), 'Factor')
+    color = nb.mix(nb.math('MULTIPLY', nb.maprange(li, 0.6, 0.66), 0.45 * strength), color, (0.42, 0.42, 0.36))
+    dirt = nb.out(nb.noise(pos, scale=0.15, detail=4, rough=0.6, w=2.0), 'Factor')
+    color = nb.mix(nb.math('MULTIPLY', nb.maprange(dirt, 0.45, 0.75), 0.35 * strength), color, (0.09, 0.075, 0.055))
+    return color
+
+
 def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None, wet=0.0, bump=1.0,
-                kind='Object', uv_scale=None, sat=1.0):
-    """Material de un solo juego de texturas con musgo opcional en las caras de arriba."""
+                kind='Object', uv_scale=None, sat=1.0, weather=0.0, weather_z=(0.0, -60.0), real=0.0):
+    """Material de un solo juego de texturas con musgo opcional en las caras de arriba.
+    real > 0: la escala sale del tamaño real escaneado de la textura (multiplicado por real)."""
     m, nb = new_material(name)
     if nb is None:
         return m
+    dim = MAN.get('texturas', {}).get(role, {}).get('dim_mm')
+    if real > 0 and dim:
+        scale = 1000.0 / (dim[0] * real)
+        print('  %s: mosaico de %.2f m (tamaño real %s mm)' % (name, 1 / scale, dim))
     if uv_scale is not None:
         vec = coords(nb, uv_scale, 'UV')
         box = False
@@ -213,6 +263,8 @@ def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None
         b = texset(nb, 'musgo', mvec, box=box)
         f = up_mask(nb, lo=1.0 - moss, hi=1.25 - moss * 0.6)
         s = mix_sets(nb, f, a, b)
+    if weather > 0:
+        s = TexSet(weathering(nb, s.color, weather, *weather_z), s.rough, s.height, s.normal)
     rough = s.rough
     if wet > 0:
         geo = nb.n('ShaderNodeNewGeometry')

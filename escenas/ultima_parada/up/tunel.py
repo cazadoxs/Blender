@@ -515,7 +515,7 @@ def build(main_c):
     brick = M.mat_ladrillo_tunel()
     soil = M.mat_generic('Tierra y hojas', 'tierra', 0.5, moss=0.45, wet=0.5, disp_scale=0.04)
     rock = M.mat_generic('Roca acantilado', 'roca', 0.12, moss=0.5, disp_scale=0.35, bump=1.5, tint=(0.8, 0.8, 0.82), sat=0.35)
-    stone = M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55, disp_scale=0.0)
+    stone = M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55, disp_scale=0.0, weather=0.8, weather_z=(cfg.CROWN + 3, -2.0), real=1.2)
     top_m = M.mat_generic('Tierra monte', 'tierra', 0.35, moss=0.7, disp_scale=0.05)
     shell = tunnel_shell(c, brick)
     cutters = make_holes(cut_c)
