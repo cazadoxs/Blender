@@ -543,7 +543,7 @@ def headlamp(c, mats):
     obs.append(lens)
     # la luz: un foco estrecho y potente y un halo más ancho y débil
     lights = []
-    for name, size, blend, energy in (('Frontal haz', 26, 0.45, 9.0), ('Frontal halo', 75, 0.9, 2.2)):
+    for name, size, blend, energy in (('Frontal haz', 26, 0.45, 30.0), ('Frontal halo', 75, 0.9, 7.0)):
         ld = bpy.data.lights.new(name, 'SPOT')
         ld.spot_size = math.radians(size)
         ld.spot_blend = blend

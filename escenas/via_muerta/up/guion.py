@@ -161,90 +161,90 @@ def plan(ev):
         return Vector((x, y, top_z(x, y) + h))
     S = []
 
-    def shot(name, t0, lens, fstop, shake, fn=None, kind='mundo', exp=0.0, **kw):
+    def shot(name, t0, lens, fstop, shake, fn=None, kind='mundo', exp=1.6, **kw):
         S.append(dict(name=name, t0=t0, lens=lens, fstop=fstop, shake=shake, fn=fn, kind=kind, exp=exp, kw=kw))
     # Acto 1 · el monte
     c1 = g(16.0, -146.0, 7.0)
-    shot('Monte', 0.0, 55, 2.8, 0.0015, lambda t: (c1 + Vector((-0.12, 0.2, -0.02)) * t, head(t) + Vector((0, 0, -0.4))), exp=0.5)
+    shot('Monte', 0.0, 55, 2.8, 0.0015, lambda t: (c1 + Vector((-0.12, 0.2, -0.02)) * t, head(t) + Vector((0, 0, -0.4))), exp=2.1)
     p2 = root(11.8)
     side = Vector((-fwd(11.8).y, fwd(11.8).x, 0)).normalized()
     c2 = p2 + side * 1.3 + fwd(11.8) * 1.6
     c2.z = top_z(c2.x, c2.y) + 0.32
-    shot('Camino', 8.0, 26, 2.2, 0.003, lambda t: (c2, root(t) + Vector((0, 0, 0.35))), exp=0.4)
+    shot('Camino', 8.0, 26, 2.2, 0.003, lambda t: (c2, root(t) + Vector((0, 0, 0.35))), exp=2.0)
     c3 = g(sx + 3.0, sy - 2.6, 1.45)
-    shot('Alcantarilla', 15.5, 32, 2.8, 0.0025, lambda t: (c3, head(t).lerp(Vector((sx, sy, gz + 0.3)), 0.35)), exp=0.4)
-    shot('Pozo', ev['llega_pozo'] + 1.0, 0, 0, 0.007, kind='pov', exp=0.6)
+    shot('Alcantarilla', 15.5, 32, 2.8, 0.0025, lambda t: (c3, head(t).lerp(Vector((sx, sy, gz + 0.3)), 0.35)), exp=2.0)
+    shot('Pozo', ev['llega_pozo'] + 1.0, 0, 0, 0.007, kind='pov', exp=2.2)
     # Acto 2 · la bajada
     shot('Bajada', t_lad, 16, 4.0, 0.002,
-         lambda t: (Vector((sx + 0.1, sy + 0.08, 0.95)), Vector((cfg.LADDER_X + 0.15, sy, gz))), exp=0.8)
+         lambda t: (Vector((sx + 0.1, sy + 0.08, 0.95)), Vector((cfg.LADDER_X + 0.15, sy, gz))), exp=2.4)
     shot('Peldanos', t_lad + 7.5, 24, 2.0, 0.003,
-         lambda t: (Vector((sx - 0.15, sy + 0.42, PERS.get('hand_R', t).z + 0.22)), PERS.get('hand_R', t)), exp=0.6)
+         lambda t: (Vector((sx - 0.15, sy + 0.42, PERS.get('hand_R', t).z + 0.22)), PERS.get('hand_R', t)), exp=2.2)
     shot('Tunel', t_lad + 12.5, 24, 4.0, 0.0015,
-         lambda t: (Vector((2.0, sy + 10.0, 0.9)), Vector((-3.9, sy, 1.8))), exp=0.9)
+         lambda t: (Vector((2.0, sy + 10.0, 0.9)), Vector((-3.9, sy, 1.8))), exp=2.5)
     # Acto 3 · el túnel
     shot('Nada', t_fl + 1.2, 28, 2.8, 0.004,
-         lambda t: (Vector((1.6, sy - 2.2, 1.35)), head(t)), exp=0.8)
+         lambda t: (Vector((1.6, sy - 2.2, 1.35)), head(t)), exp=2.4)
     shot('Camina', t_w + 1.5, 40, 2.0, 0.004,
-         lambda t: (head(t - 0.3) + Vector((0.15, 3.0, 0.05)), head(t)), exp=0.6)
+         lambda t: (head(t - 0.3) + Vector((0.15, 3.0, 0.05)), head(t)), exp=2.2)
     shot('Traviesas', t_w + 11.0, 30, 2.0, 0.003,
          lambda t: (Vector((root(t - 0.2).x + 1.25, root(t - 0.2).y + 0.9, 0.62)), root(t) + Vector((0, 0.3, 0.2))),
-         exp=0.6)
+         exp=2.2)
     shot('Luna', t106, 40, 4.0, 0.001,
-         lambda t: (Vector((3.1, -82.0, 1.1)), Vector((0.0, -101.0, 1.5))), exp=0.8)
+         lambda t: (Vector((3.1, -82.0, 1.1)), Vector((0.0, -101.0, 1.5))), exp=2.4)
     shot('Respira', t93, 50, 1.8, 0.004,
-         lambda t: (head(t - 0.2) + Vector((1.05, 0.35, 0.02)), head(t)), exp=0.6)
+         lambda t: (head(t - 0.2) + Vector((1.05, 0.35, 0.02)), head(t)), exp=2.2)
     shot('Sonido', ev['ruido1'] - 3.5, 45, 2.0, 0.0035,
-         lambda t: (Vector((0.25, WALK_STOP_Y + 1.35, 1.62)), head(t)), exp=0.6)
+         lambda t: (Vector((0.25, WALK_STOP_Y + 1.35, 1.62)), head(t)), exp=2.2)
     # Acto 4 · se asoma
-    shot('Detras', ev['mira_atras'], 0, 0, 0.007, kind='pov', exp=0.7)
+    shot('Detras', ev['mira_atras'], 0, 0, 0.007, kind='pov', exp=2.3)
     shot('Se asoma', ev['asoma'] + 4.8, 30, 2.8, 0.0025,
-         lambda t: (Vector((0.55, WALK_STOP_Y + 1.5, 1.25)), Vector((hx, hy, vz - 0.6))), exp=0.9)
+         lambda t: (Vector((0.55, WALK_STOP_Y + 1.5, 1.25)), Vector((hx, hy, vz - 0.6))), exp=2.5)
     shot('Cara', ev['asoma'] + 8.6, 60, 2.0, 0.002,
          lambda t: (Vector((hx + 0.5, hy + 4.2, 2.9)).lerp(Vector((hx + 0.45, hy + 3.4, 3.4)), smoothstep(ev['asoma'] + 8.6, ev['asoma'] + 12.2, t)),
-                    mon_face(t)), exp=1.0)
+                    mon_face(t)), exp=2.6)
     shot('Miedo', ev['asoma_fin'] + 0.6, 45, 2.0, 0.005,
-         lambda t: (Vector((0.15, WALK_STOP_Y - 1.25, 1.6)), head(t)), exp=0.6)
+         lambda t: (Vector((0.15, WALK_STOP_Y - 1.25, 1.6)), head(t)), exp=2.2)
     # Acto 5 · la persecución
     shot('Cae', ev['cae'], 22, 4.0, 0.004,
-         lambda t: (Vector((2.4, WALK_STOP_Y + 5.0, 0.7)), Vector((hx * 0.5, hy + 1.0, 3.2))), exp=0.9)
+         lambda t: (Vector((2.4, WALK_STOP_Y + 5.0, 0.7)), Vector((hx * 0.5, hy + 1.0, 3.2))), exp=2.5)
     shot('Corre', ev['persigue'] + 0.6, 26, 2.8, 0.012,
-         lambda t: (root(t - 0.15) + Vector((0.4, -2.6, 1.55)), head(t) + Vector((0, 4.0, -0.25))), exp=0.8)
+         lambda t: (root(t - 0.15) + Vector((0.4, -2.6, 1.55)), head(t) + Vector((0, 4.0, -0.25))), exp=2.4)
     shot('Paredes', ev['persigue'] + 5.2, 30, 2.8, 0.01,
-         lambda t: (root(t) + Vector((0.6, 5.2, 1.45)), head(t) + Vector((0, -3.0, 0.6))), exp=0.9)
+         lambda t: (root(t) + Vector((0.6, 5.2, 1.45)), head(t) + Vector((0, -3.0, 0.6))), exp=2.5)
     yt = mon_pos(ev['techo'] + 1.5).y
     shot('Techo', ev['techo'] - 1.5, 18, 4.0, 0.004,
-         lambda t: (Vector((-1.2, yt + 6.0, 0.55)), mon_pos(t)), exp=1.0)
-    shot('Locomotora', ev['techo'] + 3.0, 0, 0, 0.014, kind='pov', exp=0.9)
+         lambda t: (Vector((-1.2, yt + 6.0, 0.55)), mon_pos(t)), exp=2.6)
+    shot('Locomotora', ev['techo'] + 3.0, 0, 0, 0.014, kind='pov', exp=2.5)
     shot('Tender', ev['llega_loco'] - 3.8, 24, 2.8, 0.009,
-         lambda t: (Vector((-3.75, root(t).y + 1.4, 1.45)), head(t) + Vector((0.4, 2.0, -0.1))), exp=0.9)
+         lambda t: (Vector((-3.75, root(t).y + 1.4, 1.45)), head(t) + Vector((0.4, 2.0, -0.1))), exp=2.5)
     # Acto 6 · el tren (las cámaras de la cabina viajan con la locomotora)
     shot('Cabina', ev['llega_loco'] - 0.2, 18, 2.8, 0.004,
-         lambda t: (maq(t, (0.95, 47.95, 3.15)), maq(t, (-1.3, BOARD_Y, 2.3))), exp=0.9)
+         lambda t: (maq(t, (0.95, 47.95, 3.15)), maq(t, (-1.3, BOARD_Y, 2.3))), exp=2.5)
     shot('Regulador', ev['regulador'] - 1.2, 30, 2.0, 0.003,
-         lambda t: (maq(t, (-0.75, 46.25, 3.05)), maq(t, (0.25, 47.05, 2.55))), exp=0.8)
+         lambda t: (maq(t, (-0.75, 46.25, 3.05)), maq(t, (0.25, 47.05, 2.55))), exp=2.4)
     shot('Ruedas', P['t0'] - 0.1, 30, 2.8, 0.003,
-         lambda t: (Vector((-2.6, 50.0, 0.65)), Vector((-0.8, 50.8 + 0.6 * smoothstep(P['t1'], P['t1'] + 3, t), 0.95))), exp=0.9)
+         lambda t: (Vector((-2.6, 50.0, 0.65)), Vector((-0.8, 50.8 + 0.6 * smoothstep(P['t1'], P['t1'] + 3, t), 0.95))), exp=2.5)
     shot('Arranca', P['t1'] + 3.0, 35, 2.8, 0.003,
-         lambda t: (Vector((1.3, 86.0, 1.1)), maq(t, (0.0, 57.0, 2.6))), exp=0.9)
+         lambda t: (Vector((1.3, 86.0, 1.1)), maq(t, (0.0, 57.0, 2.6))), exp=2.5)
     shot('Boca', tren.t_of_s(24.0), 28, 4.0, 0.002,
          lambda t: (Vector((7.5, 128.0, 4.0)), Vector((0.0, 101.0, 3.0)).lerp(maq(t, (0, 52, 2.5)), 0.5 * smoothstep(P['t_boca'] - 1, P['t_boca'] + 2, t))),
-         exp=0.6)
+         exp=2.2)
     shot('Mira atras', t_look - 0.6, 28, 2.8, 0.005,
-         lambda t: (maq(t, (-2.35, 49.6, 2.75)), maq(t, (-1.3, BOARD_Y, 2.75))), exp=0.7)
+         lambda t: (maq(t, (-2.35, 49.6, 2.75)), maq(t, (-1.3, BOARD_Y, 2.75))), exp=2.3)
     shot('Lo ve', t_look + 1.6, 45, 2.8, 0.006,
-         lambda t: (maq(t, (-1.95, 46.3, 2.95)), mon_pos(t) + Vector((0, 0, 0.3))), exp=0.7)
+         lambda t: (maq(t, (-1.95, 46.3, 2.95)), mon_pos(t) + Vector((0, 0, 0.3))), exp=2.3)
     shot('Delante', t_fwd, 32, 2.8, 0.005,
-         lambda t: (maq(t, (-0.45, 46.45, 3.05)), maq(t, (0.0, 80.0, 1.8))), exp=0.6)
+         lambda t: (maq(t, (-0.45, 46.45, 3.05)), maq(t, (0.0, 80.0, 1.8))), exp=2.2)
     shot('Freno', P['tb'] - 0.3, 26, 2.0, 0.008,
-         lambda t: (maq(t, (0.35, 46.3, 2.95)), maq(t, (-0.62, 46.9, 2.45))), exp=0.7)
+         lambda t: (maq(t, (0.35, 46.3, 2.95)), maq(t, (-0.62, 46.9, 2.45))), exp=2.3)
     # Acto 7 · la caída
     shot('Caida', P['te'] - 1.0, 45, 5.6, 0.0015,
-         lambda t: (Vector((55.0, 196.0, -6.0)), Vector((0.0, 213.0, -3.0))), exp=0.5)
+         lambda t: (Vector((55.0, 196.0, -6.0)), Vector((0.0, 213.0, -3.0))), exp=2.1)
     shot('Abismo', P.get('t_caida', P['te'] + 2) + 1.2, 28, 4.0, 0.004,
-         lambda t: (Vector((1.8, 209.5, 1.9)), maq(t, tren.PIV_M)), exp=0.5)
+         lambda t: (Vector((1.8, 209.5, 1.9)), maq(t, tren.PIV_M)), exp=2.1)
     shot('Borde', P.get('t_impacto', P['te'] + 5) + 1.5, 40, 2.8, 0.002,
-         lambda t: (Vector((1.6, edge + 4.0, 1.5)).lerp(Vector((1.25, edge + 3.2, 1.75)), smoothstep(ev['grito_final'] - 2, ev['fin'], t)),
-                    mon_face(t)), exp=0.6)
+         lambda t: (Vector((2.4, edge + 8.5, 1.4)).lerp(Vector((2.0, edge + 7.2, 1.7)), smoothstep(ev['grito_final'] - 2, ev['fin'], t)),
+                    mon_face(t)), exp=2.2)
     return S
 
 

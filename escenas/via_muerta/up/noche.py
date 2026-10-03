@@ -61,7 +61,7 @@ def sky_nodes(nb, moon_only=False):
 
 def moon(c):
     d = bpy.data.lights.new('Luna', 'SUN')
-    d.energy = 0.55
+    d.energy = 1.1
     d.angle = math.radians(0.6)
     d.color = MOON_COLOR
     ob = bpy.data.objects.new('Luna', d)

@@ -843,8 +843,10 @@ def monster_story(MR, ctx):
     vault = cfg.vault_z(hx)
     gtop = ground_at(hx, hy - 6.0, 200.0)
     # bajo tierra (invisible) hasta poco antes de asomarse; sube detrás del hundimiento
-    mo.key(-1.0, (hx, hy - 7.0, gtop - 8.0), (0, 1, 0))
-    mo.key(t_peek - 4.0, (hx, hy - 7.0, gtop - 8.0), (0, 1, 0))
+    # escondido bajo el monte, lejos del túnel (el túnel pasa a solo unos metros por debajo)
+    gfar = ground_at(40.0, hy - 7.0, 200.0)
+    mo.key(-1.0, (40.0, hy - 7.0, gfar - 8.0), (0, 1, 0))
+    mo.key(t_peek - 4.0, (40.0, hy - 7.0, gfar - 8.0), (-1, 0, 0))
     mo.key(t_peek - 1.0, (hx, hy - 6.0, gtop + 2.2), (0, 1, 0))
 
     def dn(a):
