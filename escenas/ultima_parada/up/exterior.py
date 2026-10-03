@@ -3,7 +3,7 @@ la vía que sigue por encima (con los carriles colgando sobre el vacío), el val
 su río y su bosque, la ladera de enfrente, montañas lejanas y una bandada de pájaros."""
 import bpy, bmesh, math
 import numpy as np
-from mathutils import Vector, noise
+from mathutils import Vector, Matrix, noise
 from . import cfg
 from .cfg import Y1, VIA_END, VALLEY_Z
 from .util import coll, box, bm_obj, mesh_obj, grid_mesh, adaptive, apply_mods, rng, bevel, join, hidden_coll
@@ -61,7 +61,8 @@ def gap_polygon(seed=3):
     return pts
 
 
-def viaduct(c, stone, cut_c):
+def viaduct(c, stone, cut_c, dov_mat=None):
+    dov_mat = dov_mat or stone
     y0, y1 = Y1 - 0.3, VIA_END
     body = box('Viaducto', c, (2 * HALF, y1 - y0, 95), (0, (y0 + y1) / 2, -47.5), stone)
     voids = []
@@ -107,6 +108,59 @@ def viaduct(c, stone, cut_c):
         mm.object = gap
         apply_mods(o)
         bevel(o, 0.03, 2)
+    # dovelas de los arcos, impostas en el arranque y cornisas corridas entre los dos órdenes,
+    # como en los acueductos romanos de sillería
+    gpts = gap_polygon()
+    in_gap = lambda y, z: T.point_in_poly(y, z, gpts)
+    bm = bmesh.new()
+
+    def block(cx, cy, cz, sx, sy, sz, ang=0.0):
+        rot = Matrix.Rotation(ang, 4, 'X')
+        vs = []
+        for dx in (-1, 1):
+            for dy in (-1, 1):
+                for dz in (-1, 1):
+                    v = rot @ Vector((dx * sx / 2, dy * sy / 2, dz * sz / 2))
+                    vs.append(bm.verts.new((cx + v.x, cy + v.y, cz + v.z)))
+        for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+            bm.faces.new([vs[i] for i in f])
+
+    rr = rng(17)
+    for ya, yb in zip(edges, edges[1:]):
+        a, b = ya + PIER_T / 2, yb - PIER_T / 2
+        if ya == Y1:
+            a = Y1 + 1.2
+        r = (b - a) / 2
+        yc = (a + b) / 2
+        for z_spring in (-14.0, -42.0):
+            depth = 1.05
+            n = max(9, int(round(math.pi * (r + depth / 2) / 0.62)) | 1)     # número impar: clave en el centro
+            for i in range(n):
+                t = (i + 0.5) / n * math.pi
+                rm = r + depth / 2 - 0.02
+                y = yc + rm * math.cos(t)
+                z = z_spring + rm * math.sin(t)
+                if in_gap(y, z):
+                    continue
+                arc = math.pi * (r + depth / 2) / n
+                key = (i == n // 2)
+                block(0.0, y, z, 2 * HALF + (0.16 if key else 0.1), arc - 0.035,
+                      depth * (1.18 if key else 1.0) + rr.uniform(-0.04, 0.04), ang=t - math.pi / 2)
+    # impostas en el arranque de cada arco (sobre las pilas)
+    for yp in edges[1:-1]:
+        for z_spring in (-14.0, -42.0):
+            if not in_gap(yp, z_spring):
+                block(0.0, yp, z_spring - 0.22, 2 * HALF + 0.34, PIER_T + 0.5, 0.42)
+    dov = bm_obj(bm, 'Dovelas e impostas', c, dov_mat)
+    bevel(dov, 0.025, 2)
+    # cornisa corrida sobre el primer orden de arcos
+    band = box('Imposta corrida', c, (2 * HALF + 0.5, y1 - y0, 0.5), (0, (y0 + y1) / 2, -29.25), dov_mat)
+    mm = band.modifiers.new('hueco', 'BOOLEAN')
+    mm.operation = 'DIFFERENCE'
+    mm.solver = 'EXACT'
+    mm.object = gap
+    apply_mods(band)
+    bevel(band, 0.03, 2)
     # zócalos de las pilas (ensanchados en la base)
     for yp in piers:
         b = box('Zocalo pila', c, (2 * HALF + 2.5, PIER_T + 2.2, 14), (0, yp, VALLEY_Z - 2), stone, bevel=0.05)
@@ -238,11 +292,13 @@ def build(main, ctx):
     cut_c = coll('Cortes viaducto', main)
     tmats = ctx.get('tunel', {})
     stone = tmats.get('stone') or M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55)
-    # muro de fortaleza escaneado entero (unos 20 m de lado): apenas se repite en el viaducto
+    # sillería de arenisca dorada (como el Pont del Diable de Tarragona), a su tamaño real escaneado
     role_v = 'muralla' if M.has('muralla') else 'sillar'
-    stone_v = M.mat_generic('Sillar viaducto', role_v, 0.3, moss=0.5, disp_scale=0.0, bump=2.5,
-                            weather=1.3, weather_z=(0.0, -75.0), real=1.0)
-    viaduct(c, stone_v, cut_c)
+    stone_v = M.mat_generic('Sillar viaducto', role_v, 0.3, moss=0.35, disp_scale=0.0, bump=2.5,
+                            tint=(1.04, 0.97, 0.88), weather=0.6, weather_z=(0.0, -75.0), real=1.0)
+    dov_v = M.mat_generic('Dovelas viaducto', role_v, 0.3, moss=0.25, disp_scale=0.0, bump=2.5,
+                          tint=(1.12, 1.02, 0.9), weather=0.45, weather_z=(0.0, -75.0), real=0.8)
+    viaduct(c, stone_v, cut_c, dov_v)
     # vía sobre el viaducto: hasta el hundimiento (con los carriles colgando) y después del hueco
     mats = (tmats.get('rail') or M.mat_rail(), tmats.get('wood') or M.mat_generic('Madera traviesas', 'madera', 0.8),
             tmats.get('ballast') or M.mat_generic('Balasto', 'balasto', 0.7, moss=0.3))
