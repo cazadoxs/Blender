@@ -79,7 +79,9 @@ def world():
         pass
     nb = NB(w.node_tree)
     out = nb.n('ShaderNodeOutputWorld')
-    hd = MAN.get('hdri')
+    # El HDRI de noche descargado (rogland_moonlit_night) viene muy expuesto: con la exposición de los
+    # planos el cielo sale de día. Se usa siempre el cielo procedural, que es el que está ajustado.
+    hd = None
     col = None
     if hd:
         try:
@@ -98,7 +100,7 @@ def world():
         col = sky_nodes(nb)
     # la luz que el cielo da a la escena es muy poca: la cámara lo ve más claro que lo que ilumina
     lp = nb.n('ShaderNodeLightPath')
-    strength = nb.mix(nb.out(lp, 'Is Camera Ray'), 0.35, 1.0, kind='FLOAT')
+    strength = nb.mix(nb.out(lp, 'Is Camera Ray'), 0.35, 0.5, kind='FLOAT')
     bg = nb.n('ShaderNodeBackground', {'Color': col})
     nb.set(bg.inputs['Strength'], strength)
     nb.set(out.inputs['Surface'], nb.out(bg))

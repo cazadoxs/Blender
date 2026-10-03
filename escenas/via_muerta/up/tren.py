@@ -232,6 +232,16 @@ def lamps(c, maq, ten):
     fo.location = (0.05, BACKHEAD_Y - 0.25, 2.2)
     _parent_keep(fo, maq)
     G['firelight'] = fo
+    # brasas que caen al cenicero: un resplandor anaranjado bajo la caldera, entre las ruedas
+    al = bpy.data.lights.new('Brasas cenicero', 'POINT')
+    al.energy = 0.0
+    al.color = (1.0, 0.32, 0.06)
+    al.shadow_soft_size = 0.3
+    ao = bpy.data.objects.new('Brasas cenicero luz', al)
+    c.objects.link(ao)
+    ao.location = (0.0, BACKHEAD_Y + 1.0, 0.55)
+    _parent_keep(ao, maq)
+    G['ashlight'] = ao
 
 
 def attach_vegetation(ctx):
@@ -495,15 +505,17 @@ def bake(t_end):
     # luces: hogar, farol, cola
     tr = P['t_reg']
     A.bake_prop(G['door'], 'rotation_euler', [(tr - 1.6, (0, 0, 0)), (tr - 1.1, (0, 0, math.radians(-100)))])
-    fire_keys, fl_keys = [], []
+    fire_keys, fl_keys, ash_keys = [], [], []
     for k in range(int((t_end - tr + 3) * 8)):
         t = tr - 1.4 + k / 8
         flick = 0.75 + 0.25 * A.nz(t, 11, 6) + 0.1 * A.nz(t, 12, 17)
         on = A.smoothstep(tr - 1.4, tr + 0.6, t)
         fire_keys.append((t, (1, 1, 1, 0.08 + 0.92 * on * flick)))
         fl_keys.append((t, 6.0 + 140.0 * on * flick))
+        ash_keys.append((t, 3.0 + 45.0 * on * (0.6 + 0.4 * flick)))
     A.bake_prop(G['fire'], 'color', fire_keys)
     A.bake_prop(G['firelight'].data, 'energy', fl_keys)
+    A.bake_prop(G['ashlight'].data, 'energy', ash_keys)
     on = [(tr + 0.2, 0.0), (tr + 0.35, 0.6), (tr + 0.45, 0.1), (tr + 0.6, 1.0)]     # parpadea al encenderse
     A.bake_prop(G['headlamp'].data, 'energy', [(t, v * 1800.0) for t, v in on])
     if 'lens' in G:

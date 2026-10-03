@@ -223,7 +223,7 @@ def plan(ev):
     shot('Regulador', ev['regulador'] - 1.2, 30, 2.0, 0.003,
          lambda t: (maq(t, (-0.75, 46.25, 3.05)), maq(t, (0.25, 47.05, 2.55))), exp=2.4)
     shot('Ruedas', P['t0'] - 0.1, 30, 2.8, 0.003,
-         lambda t: (Vector((-2.6, 50.0, 0.65)), Vector((-0.8, 50.8 + 0.6 * smoothstep(P['t1'], P['t1'] + 3, t), 0.95))), exp=2.5)
+         lambda t: (Vector((-2.6, 50.0, 0.65)), Vector((-0.8, 50.8 + 0.6 * smoothstep(P['t1'], P['t1'] + 3, t), 0.95))), exp=3.0)
     shot('Arranca', P['t1'] + 3.0, 35, 2.8, 0.003,
          lambda t: (Vector((1.3, 86.0, 1.1)), maq(t, (0.0, 57.0, 2.6))), exp=2.5)
     shot('Boca', tren.t_of_s(24.0), 28, 4.0, 0.002,
@@ -233,15 +233,16 @@ def plan(ev):
          lambda t: (maq(t, (-2.35, 49.6, 2.75)), maq(t, (-1.3, BOARD_Y, 2.75))), exp=2.3)
     shot('Lo ve', t_look + 1.6, 45, 2.8, 0.006,
          lambda t: (maq(t, (-1.95, 46.3, 2.95)), mon_pos(t) + Vector((0, 0, 0.3))), exp=2.3)
+    # asomado por el lado izquierdo de la cabina, mirando por delante de la caldera
     shot('Delante', t_fwd, 32, 2.8, 0.005,
-         lambda t: (maq(t, (-0.45, 46.45, 3.05)), maq(t, (0.0, 80.0, 1.8))), exp=2.2)
+         lambda t: (maq(t, (-2.0, 46.9, 3.0)), maq(t, (-1.1, 80.0, 2.0))), exp=1.7)
     shot('Freno', P['tb'] - 0.3, 26, 2.0, 0.008,
          lambda t: (maq(t, (0.35, 46.3, 2.95)), maq(t, (-0.62, 46.9, 2.45))), exp=2.3)
     # Acto 7 · la caída
     shot('Caida', P['te'] - 1.0, 45, 5.6, 0.0015,
-         lambda t: (Vector((55.0, 196.0, -6.0)), Vector((0.0, 213.0, -3.0))), exp=2.1)
+         lambda t: (Vector((55.0, 196.0, -6.0)), Vector((0.0, 213.0, -3.0))), exp=1.6)
     shot('Abismo', P.get('t_caida', P['te'] + 2) + 1.2, 28, 4.0, 0.004,
-         lambda t: (Vector((1.8, 209.5, 1.9)), maq(t, tren.PIV_M)), exp=2.1)
+         lambda t: (Vector((1.8, 209.5, 1.9)), maq(t, tren.PIV_M)), exp=1.6)
     shot('Borde', P.get('t_impacto', P['te'] + 5) + 1.5, 40, 2.8, 0.002,
          lambda t: (Vector((2.4, edge + 8.5, 1.4)).lerp(Vector((2.0, edge + 7.2, 1.7)), smoothstep(ev['grito_final'] - 2, ev['fin'], t)),
                     mon_face(t)), exp=2.2)
