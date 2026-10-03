@@ -197,7 +197,7 @@ def build(main, ctx):
     fill(c, 'Relleno placa', (1.6, L + 2.6, 0.6), (0, L - 0.9, 2.4), 1.5, 11, 817, 936)
     fill(c, 'Relleno gota', (px + 1.2, py - 0.6, 0.7), (px, py, pz), 0.8, 1.2, 1, 144)
     # contraluz en la punta de la raíz: hace brillar la gota mientras se forma
-    fill(c, 'Contraluz raiz', (px - 0.45, py + 0.9, tz + 0.55), (px, py, tz - 0.05), 0.25, 3.0, 1, 144)
+    fill(c, 'Contraluz raiz', (px - 0.45, py + 0.9, tz + 0.55), (px, py, tz - 0.05), 0.35, 10.0, 1, 144)
 
     # marcadores con cámara: cada plano corta en su fotograma
     for (name, f0, f1), cam in zip(SHOTS, cams):
@@ -208,7 +208,7 @@ def build(main, ctx):
     # exposición: dentro del túnel se abre el diafragma; al salir se cierra (como una cámara real)
     vs = scene.view_settings
     expo = [(1, 1.5), (58, 1.5), (84, 0.8), (144, 0.7), (145, 2.0), (433, 1.9), (673, 2.0), (817, 1.9), (937, 1.9), (1100, 1.6),
-            (EXIT_FRAMES[0], 1.1), (EXIT_FRAMES[1], 0.0), (1560, 0.0), (1561, 0.15), (1800, 0.15)]
+            (EXIT_FRAMES[0], 1.1), (EXIT_FRAMES[1], -0.3), (1560, -0.2), (1561, 0.15), (1800, 0.15)]
     for f, e in expo:
         vs.exposure = e
         vs.keyframe_insert('exposure', frame=f)

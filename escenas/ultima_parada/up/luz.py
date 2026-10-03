@@ -87,7 +87,7 @@ def volumes(c):
     obs.append(b)
     # bruma general (perspectiva aérea) que se aclara con la altura
     # (la caja baja hasta -400 m para que el suelo no asome por debajo de la bruma con un corte duro)
-    m = M.mat_volumen('Bruma', 0.00038, aniso=0.7, color=(0.95, 0.9, 0.85), height_falloff=(0.246, 0.577))
+    m = M.mat_volumen('Bruma', 0.00024, aniso=0.7, color=(0.95, 0.9, 0.85), height_falloff=(0.246, 0.577))
     b = box('Volumen bruma', c, (9000, 8000, 1300), (0, 3000, 250), m)
     b.display_type = 'BOUNDS'
     obs.append(b)

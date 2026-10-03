@@ -193,7 +193,7 @@ def mat_ladrillo_tunel():
 
 
 def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None, wet=0.0, bump=1.0,
-                kind='Object', uv_scale=None):
+                kind='Object', uv_scale=None, sat=1.0):
     """Material de un solo juego de texturas con musgo opcional en las caras de arriba."""
     m, nb = new_material(name)
     if nb is None:
@@ -204,6 +204,9 @@ def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None
     else:
         vec = coords(nb, scale, kind)
     a = texset(nb, role, vec, box=box, tint=tint, bump=bump)
+    if sat != 1.0:
+        hs = nb.n('ShaderNodeHueSaturation', {'Saturation': sat, 'Color': a.color})
+        a = TexSet(nb.out(hs), a.rough, a.height, a.normal)
     s = a
     if moss > 0:
         mvec = coords(nb, scale * 1.7, kind) if uv_scale is None else coords(nb, uv_scale * 1.7, 'UV')
@@ -233,6 +236,8 @@ def mat_paisaje(name, scale=0.12, rock_tint=(0.62, 0.62, 0.64), disp_scale=0.0):
     moss = texset(nb, 'musgo', coords(nb, scale * 2.3), box=True, tint=(0.85, 1.0, 0.8))
     dry = texset(nb, 'tierra', coords(nb, scale * 3.1), box=True, tint=(0.9, 0.85, 0.75))
     rock = texset(nb, 'roca', coords(nb, scale * 0.6), box=True, tint=rock_tint, bump=1.4)
+    rock = TexSet(nb.out(nb.n('ShaderNodeHueSaturation', {'Saturation': 0.35, 'Color': rock.color})),
+                  rock.rough, rock.height, rock.normal)
     big = nb.out(nb.noise(pos, scale=0.012, detail=5, rough=0.6), 'Factor')
     mid = nb.out(nb.noise(pos, scale=0.06, detail=4, rough=0.55), 'Factor')
     s_ = mix_sets(nb, nb.maprange(mid, 0.42, 0.62), grass, moss)
