@@ -1,0 +1,64 @@
+name: Via muerta - prueba con recursos reales
+
+# Descarga las texturas y modelos escaneados (Poly Haven / ambientCG) a 1k,
+# construye la escena y renderiza un fotograma de cada plano a baja resolución
+# con la CPU. Las imágenes y el registro se publican en la rama pruebas-via-muerta.
+on:
+  workflow_dispatch:
+    inputs:
+      frames:
+        description: Fotogramas a renderizar
+        default: '97,481,841,1273,1873,2641,2737,2833,3361,3601,3769,3865,4057,4177,4345,4657'
+      ancho:
+        default: '768'
+      muestras:
+        default: '24'
+  push:
+    branches: [claude/corto-terror-nocturno-41r3pk]
+    paths: ['escenas/via_muerta/**', '.github/workflows/via_muerta.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: via-muerta
+  cancel-in-progress: true
+
+jobs:
+  prueba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender (bpy 5.0)
+        run: pip install bpy==5.0.0 numpy
+      - uses: actions/cache@v4
+        with:
+          path: escenas/via_muerta/recursos
+          key: recursos-1k-${{ hashFiles('escenas/via_muerta/recursos.json') }}
+          restore-keys: recursos-1k-
+      - name: Descargar recursos
+        run: python descargar_recursos.py --max-res 1k 2>&1 | tee descarga.log
+      - name: Construir escena
+        run: python -u -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
+      - name: Renderizar pruebas
+        run: python -u prueba_nube.py --frames "${{ inputs.frames || '97,481,841,1273,1873,2641,2737,2833,3361,3601,3769,3865,4057,4177,4345,4657' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
+      - name: Publicar en la rama pruebas-via-muerta
+        if: always()
+        run: |
+          mkdir -p /tmp/pub && cp -r pruebas /tmp/pub/ 2>/dev/null || true
+          cp descarga.log construir.log render.log timing.json /tmp/pub/ 2>/dev/null || true
+          cp recursos/manifiesto.json recursos/catalogo_texturas.json /tmp/pub/ 2>/dev/null || true
+          cd /tmp/pub
+          git init -q -b pruebas-via-muerta
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          echo "Prueba de ${GITHUB_SHA} ($(date -u))" > LEEME.txt
+          git add -A && git commit -qm "Pruebas de render ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" pruebas-via-muerta
