@@ -1,0 +1,92 @@
+Recursos: 12 texturas, 7 grupos de modelos, HDRI: belfast_sunset_puresky
+[   0.1 s] Túnel, vía y acantilado
+  Sillar: mosaico de 3.60 m (tamaño real [3000, 3000] mm)
+  Rotura boveda: mosaico de 1.50 m (tamaño real [1500, 1500] mm)
+[  22.7 s] Locomotora
+[  24.4 s] Viaducto, valle y montañas
+  Sillar viaducto: mosaico de 3.00 m (tamaño real [3000, 3000] mm)
+  Dovelas viaducto: mosaico de 2.40 m (tamaño real [3000, 3000] mm)
+    island_tree_01_1k.blend: island_tree_01_LOD0(812532, 5.0m)
+    island_tree_02_1k.blend: island_tree_02_LOD0(544639, 4.2m)
+    island_tree_03_1k.blend: island_tree_03_LOD0(1059346, 3.0m)
+  arbol: 3 modelos escaneados
+    shrub_01_1k.blend: shrub_01_i_LOD0(23452, 0.3m), shrub_01_h_LOD0(37459, 0.4m), shrub_01_g_LOD0(20793, 0.2m), shrub_01_f_LOD0(1338, 0.1m), shrub_01_e_LOD0(1918, 0.2m), shrub_01_d_LOD0(2020, 0.2m), shrub_01_c_LOD0(2674, 0.3m), shrub_01_b_LOD0(3032, 0.3m), shrub_01_a_LOD0(4390, 0.4m)
+    shrub_02_1k.blend: shrub_02_d_LOD0(2630, 1.0m), shrub_02_c_LOD0(4692, 1.8m), shrub_02_b_LOD0(2660, 1.1m), shrub_02_a_LOD0(3852, 1.4m)
+    shrub_04_1k.blend: shrub_04_d_LOD0(5420, 0.3m), shrub_04_c_LOD0(3090, 0.3m), shrub_04_b_LOD0(3296, 0.2m), shrub_04_a_LOD0(1864, 0.2m)
+  arbusto: 3 modelos escaneados
+[  28.3 s] Vegetación, raíces y hiedra
+    fern_02_1k.blend: fern_02_d(408, 0.6m), fern_02_c(1124, 0.9m), fern_02_b(1192, 1.0m), fern_02_a(392, 0.6m)
+  helecho: 1 modelos escaneados
+    grass_medium_01_1k.blend: grass_medium_01_tiny_f_LOD0(32, 0.1m), grass_medium_01_tiny_e_LOD0(32, 0.1m), grass_medium_01_tiny_d_LOD0(16, 0.1m), grass_medium_01_tiny_c_LOD0(20, 0.1m), grass_medium_01_tiny_b_LOD0(15, 0.1m), grass_medium_01_tiny_a_LOD0(40, 0.1m), grass_medium_01_tall_c_LOD0(175, 0.2m), grass_medium_01_tall_b_LOD0(161, 0.3m), grass_medium_01_tall_a_LOD0(147, 0.3m), grass_medium_01_small_b_LOD0(338, 0.2m), grass_medium_01_small_a_LOD0(433, 0.2m), grass_medium_01_mid_c_LOD0(752, 0.2m), grass_medium_01_mid_b_LOD0(637, 0.2m), grass_medium_01_mid_a_LOD0(1148, 0.2m), grass_medium_01_large_c_LOD0(3048, 0.3m), grass_medium_01_large_b_LOD0(2399, 0.3m), grass_medium_01_large_a_LOD0(3277, 0.3m)
+    grass_medium_02_1k.blend: grass_medium_02_e(853, 0.4m), grass_medium_02_d(1274, 0.4m), grass_medium_02_c(622, 0.3m), grass_medium_02_b(900, 0.2m), grass_medium_02_a(365, 0.2m)
+    grass_bermuda_01_1k.blend: grass_bermuda_01_small_f(6, 0.1m), grass_bermuda_01_small_e(6, 0.1m), grass_bermuda_01_small_d(6, 0.1m), grass_bermuda_01_small_c(10, 0.1m), grass_bermuda_01_small_b(7, 0.1m), grass_bermuda_01_small_a(7, 0.1m), grass_bermuda_01_single_b(8, 0.1m), grass_bermuda_01_single_a(8, 0.1m), grass_bermuda_01_seedling_d(158, 0.2m), grass_bermuda_01_seedling_c(76, 0.1m), grass_bermuda_01_seedling_b(82, 0.1m), grass_bermuda_01_seedling_a(86, 0.2m), grass_bermuda_01_medium_f(18, 0.1m), grass_bermuda_01_medium_e(14, 0.1m), grass_bermuda_01_medium_d(9, 0.1m), grass_bermuda_01_medium_c(12, 0.1m), grass_bermuda_01_medium_b(4, 0.1m), grass_bermuda_01_medium_a(10, 0.1m), grass_bermuda_01_flattened_a(11, 0.1m), grass_bermuda_01_dead_b(7, 0.1m), grass_bermuda_01_dead_a(7, 0.1m)
+  hierba: 43 modelos escaneados
+      dandelion_01_e_LOD3: quitando modificadores []
+      dandelion_01_e_LOD2: quitando modificadores []
+      dandelion_01_e_LOD1: quitando modificadores []
+      dandelion_01_d_LOD3: quitando modificadores []
+      dandelion_01_d_LOD2: quitando modificadores []
+      dandelion_01_d_LOD1: quitando modificadores []
+      dandelion_01_c_LOD3: quitando modificadores []
+      dandelion_01_c_LOD2: quitando modificadores []
+      dandelion_01_c_LOD1: quitando modificadores []
+      dandelion_01_b_LOD3: quitando modificadores []
+      dandelion_01_b_LOD2: quitando modificadores []
+      dandelion_01_b_LOD1: quitando modificadores []
+      dandelion_01_a_LOD3: quitando modificadores []
+      dandelion_01_a_LOD2: quitando modificadores []
+      dandelion_01_a_LOD1: quitando modificadores []
+    dandelion_01_1k.blend: dandelion_01_e_LOD0(1040, 0.2m), dandelion_01_d_LOD0(1302, 0.1m), dandelion_01_c_LOD0(1590, 0.2m), dandelion_01_b_LOD0(12137, 0.2m), dandelion_01_a_LOD0(12229, 0.3m)
+      nettle_plant_tall_b_LOD3: quitando modificadores ['NODES']
+      nettle_plant_tall_b_LOD2: quitando modificadores ['NODES']
+      nettle_plant_tall_b_LOD1: quitando modificadores ['NODES']
+      nettle_plant_tall_b_LOD0: quitando modificadores ['NODES']
+      nettle_plant_tall_a_LOD3: quitando modificadores ['NODES']
+      nettle_plant_tall_a_LOD2: quitando modificadores ['NODES']
+      nettle_plant_tall_a_LOD1: quitando modificadores ['NODES']
+      nettle_plant_tall_a_LOD0: quitando modificadores ['NODES']
+      nettle_plant_small_b_LOD3: quitando modificadores ['NODES']
+      nettle_plant_small_b_LOD2: quitando modificadores ['NODES']
+      nettle_plant_small_b_LOD1: quitando modificadores ['NODES']
+      nettle_plant_small_b_LOD0: quitando modificadores ['NODES']
+      nettle_plant_small_a_LOD3: quitando modificadores ['NODES']
+      nettle_plant_small_a_LOD2: quitando modificadores ['NODES']
+      nettle_plant_small_a_LOD1: quitando modificadores ['NODES']
+      nettle_plant_small_a_LOD0: quitando modificadores ['NODES']
+      nettle_plant_medium_b_LOD3: quitando modificadores ['NODES']
+      nettle_plant_medium_b_LOD2: quitando modificadores ['NODES']
+      nettle_plant_medium_b_LOD1: quitando modificadores ['NODES']
+      nettle_plant_medium_b_LOD0: quitando modificadores ['NODES']
+      nettle_plant_medium_a_LOD3: quitando modificadores ['NODES']
+      nettle_plant_medium_a_LOD2: quitando modificadores ['NODES']
+      nettle_plant_medium_a_LOD1: quitando modificadores ['NODES']
+      nettle_plant_medium_a_LOD0: quitando modificadores ['NODES']
+    nettle_plant_1k.blend: nettle_plant_tall_b_LOD0(4040, 0.2m), nettle_plant_tall_a_LOD0(3492, 0.2m), nettle_plant_small_b_LOD0(544, 0.1m), nettle_plant_small_a_LOD0(1796, 0.1m), nettle_plant_medium_b_LOD0(2832, 0.1m), nettle_plant_medium_a_LOD0(2948, 0.1m)
+    celandine_01_1k.blend: celandine_01_e_LOD0(221, 0.2m), celandine_01_d_LOD0(1550, 0.2m), celandine_01_c_LOD0(2225, 0.3m), celandine_01_b_LOD0(300, 0.3m), celandine_01_a_LOD0(312, 0.3m)
+  maleza: 16 modelos escaneados
+    rock_moss_set_01_1k.blend: rock_moss_set_01_rock06(8994, 2.8m), rock_moss_set_01_rock05(16548, 3.0m), rock_moss_set_01_rock04(10589, 2.1m), rock_moss_set_01_rock03(5000, 2.1m), rock_moss_set_01_rock02(10996, 3.3m), rock_moss_set_01_rock01(11000, 3.4m)
+    rock_moss_set_02_1k.blend: rock_moss_set_02_rock13(7928, 2.1m), rock_moss_set_02_rock12(7999, 1.6m), rock_moss_set_02_rock11(8000, 2.0m), rock_moss_set_02_rock10(8000, 2.2m), rock_moss_set_02_rock09(7894, 1.6m), rock_moss_set_02_rock08(8000, 1.2m), rock_moss_set_02_rock07(9826, 2.5m)
+  rocas: 13 modelos escaneados
+  hiedra en la locomotora: 173 tallos, 7072 hojas
+  hiedra y lianas en la bóveda: 536 tallos, 17779 hojas
+[  31.7 s] Sol, cielo y atmósfera
+[  31.7 s] Cámaras y planos
+00:32.021  cycles           | WARNING CUEW initialization failed: Error opening the library
+Instancias: 408327 en total
+   Arbustos valle                           159358
+   Arbustos monte lejos                     99071
+   Hierba monte                             25774
+   Helechos monte                           17980
+   Bosque                                   15452
+   Bosque monte                             14541
+   Arbustos monte                           12832
+   Hierba Escombros tierra.006              12369
+   Hierba acantilado                        10379
+   Maleza monte                             9755
+   Polvo                                    9000
+   Arbustos acantilado                      4739
+[  32.2 s] Guardando
+Info: Saved as "ultima_parada.blend"
+Info: Total files 646 | Changed 0 | Failed 0
+Info: Saved "ultima_parada.blend"
+[  34.1 s] Hecho: /home/runner/work/Blender/Blender/escenas/ultima_parada/ultima_parada.blend

@@ -1,0 +1,56 @@
+Textura [ladrillo]
+  -> castle_brick_02_red (polyhaven)
+Textura [sillar]
+  -> sandstone_blocks_08 (polyhaven)
+Textura [muralla]
+   descargado texturas/sandstone_blocks_05/sandstone_blocks_05_diff_1k.jpg    0.6 MB
+   descargado texturas/sandstone_blocks_05/sandstone_blocks_05_nor_gl_1k.jpg    1.2 MB
+   descargado texturas/sandstone_blocks_05/sandstone_blocks_05_rough_1k.jpg    0.2 MB
+   descargado texturas/sandstone_blocks_05/sandstone_blocks_05_disp_1k.png    1.9 MB
+   descargado texturas/sandstone_blocks_05/sandstone_blocks_05_ao_1k.jpg      0.5 MB
+  -> sandstone_blocks_05 (polyhaven)
+Textura [roca]
+  -> rock_face (polyhaven)
+Textura [balasto]
+  -> gravel_floor_02 (polyhaven)
+Textura [tierra]
+  -> forest_leaves_02 (polyhaven)
+Textura [musgo]
+  -> mossy_rock (polyhaven)
+Textura [oxido]
+  -> rust_coarse_01 (polyhaven)
+Textura [metal_pintado]
+  -> green_metal_rust (polyhaven)
+Textura [madera]
+  -> weathered_brown_planks (polyhaven)
+Textura [corteza]
+  -> bark_willow_02 (polyhaven)
+Textura [pradera]
+  -> aerial_grass_rock (polyhaven)
+Modelos [helecho]
+  -> fern_02
+Modelos [hierba]
+  -> grass_medium_01
+  -> grass_medium_02
+  -> grass_bermuda_01
+Modelos [arbusto]
+  -> shrub_01
+  -> shrub_02
+  -> shrub_04
+Modelos [maleza]
+  -> dandelion_01
+  -> nettle_plant
+  -> celandine_01
+Modelos [rocas]
+  -> rock_moss_set_01
+  -> rock_moss_set_02
+Modelos [arbol]
+  -> island_tree_01
+  -> island_tree_02
+  -> island_tree_03
+Modelos [tronco]
+  -> dead_tree_trunk
+Cielo HDRI
+  -> belfast_sunset_puresky
+
+Listo. 0.36 GB en /home/runner/work/Blender/Blender/escenas/ultima_parada/recursos
