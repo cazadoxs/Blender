@@ -2,6 +2,7 @@
  "texturas": {
   "ladrillo": {"res": "4k", "candidatos": ["castle_brick_02_red", "castle_brick_07", "red_brick_03", "castle_brick_01"], "palabras": ["brick", "old", "dirty"], "evitar": ["floor", "painted", "white"], "ambientcg": ["Bricks076", "Bricks059"]},
   "sillar": {"res": "4k", "candidatos": ["sandstone_blocks_08", "large_sandstone_blocks", "medieval_blocks_02", "castle_wall_varriation", "stone_wall_04", "castle_wall_slates"], "palabras": ["blocks", "ashlar", "masonry", "stone wall"], "evitar": ["floor", "tiles"], "ambientcg": ["Bricks061", "PavingStones070"]},
+  "muralla": {"res": "4k", "candidatos": ["defense_wall", "defense_wall_02", "large_sandstone_blocks_01", "sandstone_blocks_05"], "palabras": ["fortress walls", "castle", "stone wall"], "evitar": ["floor", "tiles"], "ambientcg": ["Bricks061"]},
   "roca": {"res": "4k", "candidatos": ["rock_face", "cliff_side", "rock_wall_08", "rock_wall_10", "aerial_rocks_02"], "palabras": ["rock", "cliff", "rock wall"], "evitar": ["floor", "tiles", "concrete"], "ambientcg": ["Rock030", "Rock035"]},
   "balasto": {"res": "4k", "candidatos": ["gravel_floor_02", "rocks_ground_02", "gravel_floor", "gravel_road"], "palabras": ["gravel", "pebbles", "stones ground"], "evitar": ["concrete", "wall"], "ambientcg": ["Gravel040", "Gravel022"]},
   "tierra": {"res": "2k", "candidatos": ["forest_leaves_02", "forrest_ground_01", "brown_mud_leaves_01", "forest_ground_04"], "palabras": ["forest ground", "leaves", "mud"], "evitar": ["wall"], "ambientcg": ["Ground037", "Ground048"]},

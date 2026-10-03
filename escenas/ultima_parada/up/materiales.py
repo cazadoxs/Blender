@@ -7,6 +7,7 @@ from .util import MAN, NB, new_material, image
 FALLBACK = {
     'ladrillo': ((0.20, 0.085, 0.055), (0.11, 0.07, 0.05), 0.85),
     'sillar': ((0.30, 0.27, 0.22), (0.18, 0.16, 0.13), 0.85),
+    'muralla': ((0.30, 0.27, 0.22), (0.18, 0.16, 0.13), 0.85),
     'roca': ((0.24, 0.22, 0.19), (0.12, 0.11, 0.10), 0.9),
     'balasto': ((0.20, 0.19, 0.17), (0.09, 0.085, 0.08), 0.9),
     'tierra': ((0.10, 0.065, 0.035), (0.05, 0.04, 0.02), 0.9),
@@ -23,7 +24,7 @@ def has(role):
     return role in MAN.get('texturas', {})
 
 
-STRUCTURED = ('ladrillo', 'sillar', 'madera', 'metal_pintado')
+STRUCTURED = ('ladrillo', 'sillar', 'muralla', 'madera', 'metal_pintado')
 
 
 class TexSet:
@@ -86,8 +87,8 @@ def texset(nb, role, vec, box=False, blend=0.3, bump=1.0, bump_dist=0.02, tint=N
             if normal is not None:
                 nb.set(b.inputs['Normal'], normal)
             normal = nb.out(b)
-    elif role in ('ladrillo', 'sillar'):
-        big = role == 'sillar'
+    elif role in ('ladrillo', 'sillar', 'muralla'):
+        big = role != 'ladrillo'
         br = nb.n('ShaderNodeTexBrick', offset=0.5, squash=1.0)
         nb.set(br.inputs['Vector'], vec)
         base, var, r = FALLBACK[role]
@@ -188,7 +189,10 @@ def mat_ladrillo_tunel():
     if nb is None:
         return m
     tc = nb.n('ShaderNodeTexCoord')
-    uv = nb.out(nb.n('ShaderNodeMapping', {'Vector': nb.out(tc, 'UV'), 'Scale': (0.33, 0.33, 1)}))
+    # U del túnel recorre el perfil (vertical en los hastiales) y V el eje: se gira 90° para que las
+    # hiladas de ladrillo vayan a lo largo del túnel, como en una bóveda real
+    uv = nb.out(nb.n('ShaderNodeMapping', {'Vector': nb.out(tc, 'UV'), 'Scale': (0.33, 0.33, 1),
+                                           'Rotation': (0, 0, math.pi / 2)}))
     obj = nb.out(tc, 'Object')
     brick = texset(nb, 'ladrillo', uv, bump=1.0, bump_dist=0.03)
     moss = texset(nb, 'musgo', nb.out(nb.n('ShaderNodeMapping', {'Vector': nb.out(tc, 'UV'), 'Scale': (0.6, 0.6, 1)})),
@@ -238,7 +242,7 @@ def weathering(nb, color, strength=1.0, top=0.0, bottom=-60.0):
 
 
 def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None, wet=0.0, bump=1.0,
-                kind='Object', uv_scale=None, sat=1.0, weather=0.0, weather_z=(0.0, -60.0), real=0.0):
+                kind='Object', uv_scale=None, sat=1.0, weather=0.0, weather_z=(0.0, -60.0), real=0.0, backface=None):
     """Material de un solo juego de texturas con musgo opcional en las caras de arriba.
     real > 0: la escala sale del tamaño real escaneado de la textura (multiplicado por real)."""
     m, nb = new_material(name)
@@ -270,7 +274,11 @@ def mat_generic(name, role, scale, box=True, disp_scale=0.0, moss=0.0, tint=None
         geo = nb.n('ShaderNodeNewGeometry')
         wn = nb.out(nb.noise(nb.out(geo, 'Position'), scale=0.4, detail=3), 'Factor')
         rough = nb.mix(nb.maprange(wn, 0.55 - wet * 0.2, 0.62), rough, 0.15, kind='FLOAT')
-    p = principled(nb, s.color, rough, s.normal)
+    color = s.color
+    if backface is not None:
+        # cara de abajo de una lámina de terreno vista desde el túnel: tierra oscura, no la hierba de arriba
+        color = nb.mix(nb.out(nb.n('ShaderNodeNewGeometry'), 'Backfacing'), color, backface)
+    p = principled(nb, color, rough, s.normal)
     disp = displacement(nb, s.height, disp_scale) if (disp_scale > 0 and s.height is not None) else None
     output(nb, p, disp, m, 'BOTH' if disp is not None else 'BUMP')
     return m

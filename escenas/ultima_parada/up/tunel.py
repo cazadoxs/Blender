@@ -177,12 +177,18 @@ def delete_faces(ob, test):
     bm.free()
 
 
-def boolean_cut(ob, cutters):
+def boolean_cut(ob, cutters, edge_mat=None):
+    """edge_mat: material de las caras del corte (la rotura de la bóveda), que no tienen UV útiles."""
     for k, ct in enumerate(cutters):
+        if edge_mat is not None:
+            ct.data.materials.clear()
+            ct.data.materials.append(edge_mat)
         m = ob.modifiers.new('hueco%d' % k, 'BOOLEAN')
         m.operation = 'DIFFERENCE'
         m.solver = 'EXACT'
         m.object = ct
+        if edge_mat is not None:
+            m.material_mode = 'TRANSFER'
     apply_mods(ob)
 
 
@@ -514,12 +520,15 @@ def build(main_c):
     cut_c = coll('Cortes', main_c)
     brick = M.mat_ladrillo_tunel()
     soil = M.mat_generic('Tierra y hojas', 'tierra', 0.5, moss=0.45, wet=0.5, disp_scale=0.04)
-    rock = M.mat_generic('Roca acantilado', 'roca', 0.12, moss=0.5, disp_scale=0.35, bump=1.5, tint=(0.8, 0.8, 0.82), sat=0.35)
+    rock = M.mat_generic('Roca acantilado', 'roca', 0.12, moss=0.5, disp_scale=0.35, bump=1.5, tint=(0.8, 0.8, 0.82), sat=0.35,
+                         weather=1.0, weather_z=(30.0, -72.0))
     stone = M.mat_generic('Sillar', 'sillar', 0.33, moss=0.55, disp_scale=0.0, weather=0.8, weather_z=(cfg.CROWN + 3, -2.0), real=1.2)
-    top_m = M.mat_generic('Tierra monte', 'tierra', 0.35, moss=0.7, disp_scale=0.05)
+    top_m = M.mat_generic('Tierra monte', 'tierra', 0.35, moss=0.7, disp_scale=0.05, backface=(0.025, 0.017, 0.01))
     shell = tunnel_shell(c, brick)
     cutters = make_holes(cut_c)
-    boolean_cut(shell, cutters)
+    broken = M.mat_generic('Rotura boveda', 'ladrillo', 0.33, moss=0.6, disp_scale=0.03, bump=1.5,
+                           weather=0.8, weather_z=(CROWN + 2, 0.0), real=1.0)
+    boolean_cut(shell, cutters, broken)
     adaptive(shell)
     terrain_top(c, top_m, cutters)
     massif(c, M.mat_paisaje('Monte', 0.1, disp_scale=0.15))
