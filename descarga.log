@@ -1,0 +1,57 @@
+Textura [ladrillo]
+  -> castle_brick_02_red (polyhaven)
+Textura [sillar]
+  -> sandstone_blocks_08 (polyhaven)
+Textura [muralla]
+  -> sandstone_blocks_05 (polyhaven)
+Textura [roca]
+  -> rock_face (polyhaven)
+Textura [balasto]
+  -> gravel_floor_02 (polyhaven)
+Textura [tierra]
+  -> forest_leaves_02 (polyhaven)
+Textura [musgo]
+  -> mossy_rock (polyhaven)
+Textura [oxido]
+  -> rust_coarse_01 (polyhaven)
+Textura [metal_pintado]
+  -> green_metal_rust (polyhaven)
+Textura [madera]
+  -> weathered_brown_planks (polyhaven)
+Textura [corteza]
+  -> bark_willow_02 (polyhaven)
+Textura [pradera]
+  -> aerial_grass_rock (polyhaven)
+Textura [hormigon]
+  -> concrete_wall_008 (polyhaven)
+Textura [tela]
+  -> denim_fabric (polyhaven)
+Textura [cuero]
+  -> brown_leather (polyhaven)
+Modelos [helecho]
+  -> fern_02
+Modelos [hierba]
+  -> grass_medium_01
+  -> grass_medium_02
+  -> grass_bermuda_01
+Modelos [arbusto]
+  -> shrub_01
+  -> shrub_02
+  -> shrub_04
+Modelos [maleza]
+  -> dandelion_01
+  -> nettle_plant
+  -> celandine_01
+Modelos [rocas]
+  -> rock_moss_set_01
+  -> rock_moss_set_02
+Modelos [arbol]
+  -> island_tree_01
+  -> island_tree_02
+  -> island_tree_03
+Modelos [tronco]
+  -> dead_tree_trunk
+Cielo HDRI
+  -> rogland_moonlit_night
+
+Listo. 0.36 GB en /home/runner/work/Blender/Blender/escenas/via_muerta/recursos

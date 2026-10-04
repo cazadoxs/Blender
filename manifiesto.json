@@ -1,0 +1,330 @@
+{
+ "texturas": {
+  "ladrillo": {
+   "id": "castle_brick_02_red",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/castle_brick_02_red/castle_brick_02_red_diff_1k.jpg",
+    "normal": "recursos/texturas/castle_brick_02_red/castle_brick_02_red_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/castle_brick_02_red/castle_brick_02_red_rough_1k.jpg",
+    "disp": "recursos/texturas/castle_brick_02_red/castle_brick_02_red_disp_1k.png",
+    "ao": "recursos/texturas/castle_brick_02_red/castle_brick_02_red_ao_1k.jpg"
+   },
+   "dim_mm": [
+    1500,
+    1500
+   ]
+  },
+  "sillar": {
+   "id": "sandstone_blocks_08",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/sandstone_blocks_08/sandstone_blocks_08_diff_1k.jpg",
+    "normal": "recursos/texturas/sandstone_blocks_08/sandstone_blocks_08_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/sandstone_blocks_08/sandstone_blocks_08_rough_1k.jpg",
+    "disp": "recursos/texturas/sandstone_blocks_08/sandstone_blocks_08_disp_1k.png",
+    "ao": "recursos/texturas/sandstone_blocks_08/sandstone_blocks_08_ao_1k.jpg"
+   },
+   "dim_mm": [
+    3000,
+    3000
+   ]
+  },
+  "muralla": {
+   "id": "sandstone_blocks_05",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/sandstone_blocks_05/sandstone_blocks_05_diff_1k.jpg",
+    "normal": "recursos/texturas/sandstone_blocks_05/sandstone_blocks_05_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/sandstone_blocks_05/sandstone_blocks_05_rough_1k.jpg",
+    "disp": "recursos/texturas/sandstone_blocks_05/sandstone_blocks_05_disp_1k.png",
+    "ao": "recursos/texturas/sandstone_blocks_05/sandstone_blocks_05_ao_1k.jpg"
+   },
+   "dim_mm": [
+    3000,
+    3000
+   ]
+  },
+  "roca": {
+   "id": "rock_face",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/rock_face/rock_face_diff_1k.jpg",
+    "normal": "recursos/texturas/rock_face/rock_face_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/rock_face/rock_face_rough_1k.jpg",
+    "disp": "recursos/texturas/rock_face/rock_face_disp_1k.png",
+    "ao": "recursos/texturas/rock_face/rock_face_ao_1k.jpg"
+   },
+   "dim_mm": [
+    2380.000114440918,
+    2380.000114440918
+   ]
+  },
+  "balasto": {
+   "id": "gravel_floor_02",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/gravel_floor_02/gravel_floor_02_diff_1k.jpg",
+    "normal": "recursos/texturas/gravel_floor_02/gravel_floor_02_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/gravel_floor_02/gravel_floor_02_rough_1k.jpg",
+    "disp": "recursos/texturas/gravel_floor_02/gravel_floor_02_disp_1k.png",
+    "ao": "recursos/texturas/gravel_floor_02/gravel_floor_02_ao_1k.jpg"
+   },
+   "dim_mm": [
+    2000,
+    2000
+   ]
+  },
+  "tierra": {
+   "id": "forest_leaves_02",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/forest_leaves_02/forest_leaves_02_diffuse_1k.jpg",
+    "normal": "recursos/texturas/forest_leaves_02/forest_leaves_02_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/forest_leaves_02/forest_leaves_02_rough_1k.jpg",
+    "disp": "recursos/texturas/forest_leaves_02/forest_leaves_02_disp_1k.png",
+    "ao": "recursos/texturas/forest_leaves_02/forest_leaves_02_ao_1k.jpg"
+   },
+   "dim_mm": [
+    3000.9725093841553,
+    3000.9801387786865
+   ]
+  },
+  "musgo": {
+   "id": "mossy_rock",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/mossy_rock/mossy_rock_diff_1k.jpg",
+    "normal": "recursos/texturas/mossy_rock/mossy_rock_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/mossy_rock/mossy_rock_rough_1k.jpg",
+    "disp": "recursos/texturas/mossy_rock/mossy_rock_disp_1k.png",
+    "ao": "recursos/texturas/mossy_rock/mossy_rock_ao_1k.jpg"
+   },
+   "dim_mm": [
+    3000,
+    3000
+   ]
+  },
+  "oxido": {
+   "id": "rust_coarse_01",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/rust_coarse_01/rust_coarse_01_diff_1k.jpg",
+    "normal": "recursos/texturas/rust_coarse_01/rust_coarse_01_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/rust_coarse_01/rust_coarse_01_rough_1k.jpg",
+    "disp": "recursos/texturas/rust_coarse_01/rust_coarse_01_disp_1k.png",
+    "ao": "recursos/texturas/rust_coarse_01/rust_coarse_01_ao_1k.jpg"
+   },
+   "dim_mm": [
+    2199.9998092651367,
+    2200.000286102295
+   ]
+  },
+  "metal_pintado": {
+   "id": "green_metal_rust",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/green_metal_rust/green_metal_rust_diff_1k.jpg",
+    "normal": "recursos/texturas/green_metal_rust/green_metal_rust_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/green_metal_rust/green_metal_rust_rough_1k.jpg",
+    "disp": "recursos/texturas/green_metal_rust/green_metal_rust_disp_1k.png",
+    "ao": "recursos/texturas/green_metal_rust/green_metal_rust_ao_1k.jpg"
+   },
+   "dim_mm": [
+    1000,
+    1000
+   ]
+  },
+  "madera": {
+   "id": "weathered_brown_planks",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/weathered_brown_planks/weathered_brown_planks_diff_1k.jpg",
+    "normal": "recursos/texturas/weathered_brown_planks/weathered_brown_planks_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/weathered_brown_planks/weathered_brown_planks_rough_1k.jpg",
+    "disp": "recursos/texturas/weathered_brown_planks/weathered_brown_planks_disp_1k.png",
+    "ao": "recursos/texturas/weathered_brown_planks/weathered_brown_planks_ao_1k.jpg"
+   },
+   "dim_mm": [
+    1799.9999523162842,
+    1799.9999523162842
+   ]
+  },
+  "corteza": {
+   "id": "bark_willow_02",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/bark_willow_02/bark_willow_02_diff_1k.jpg",
+    "normal": "recursos/texturas/bark_willow_02/bark_willow_02_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/bark_willow_02/bark_willow_02_rough_1k.jpg",
+    "disp": "recursos/texturas/bark_willow_02/bark_willow_02_disp_1k.png",
+    "ao": "recursos/texturas/bark_willow_02/bark_willow_02_ao_1k.jpg"
+   },
+   "dim_mm": [
+    2150.0000953674316,
+    2150.0000953674316
+   ]
+  },
+  "pradera": {
+   "id": "aerial_grass_rock",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/aerial_grass_rock/aerial_grass_rock_diff_1k.jpg",
+    "normal": "recursos/texturas/aerial_grass_rock/aerial_grass_rock_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/aerial_grass_rock/aerial_grass_rock_rough_1k.jpg",
+    "disp": "recursos/texturas/aerial_grass_rock/aerial_grass_rock_disp_1k.png",
+    "ao": "recursos/texturas/aerial_grass_rock/aerial_grass_rock_ao_1k.jpg"
+   },
+   "dim_mm": [
+    15000,
+    15000
+   ]
+  },
+  "hormigon": {
+   "id": "concrete_wall_008",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/concrete_wall_008/concrete_wall_008_diff_1k.jpg",
+    "normal": "recursos/texturas/concrete_wall_008/concrete_wall_008_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/concrete_wall_008/concrete_wall_008_rough_1k.jpg",
+    "disp": "recursos/texturas/concrete_wall_008/concrete_wall_008_disp_1k.png",
+    "ao": "recursos/texturas/concrete_wall_008/concrete_wall_008_ao_1k.jpg"
+   },
+   "dim_mm": [
+    2710.0000381469727,
+    2710.0000381469727
+   ]
+  },
+  "tela": {
+   "id": "denim_fabric",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/denim_fabric/denim_fabric_diff_1k.jpg",
+    "normal": "recursos/texturas/denim_fabric/denim_fabric_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/denim_fabric/denim_fabric_rough_1k.jpg",
+    "disp": "recursos/texturas/denim_fabric/denim_fabric_disp_1k.png",
+    "ao": "recursos/texturas/denim_fabric/denim_fabric_ao_1k.jpg"
+   },
+   "dim_mm": [
+    100.00000149011612,
+    99.99999403953552
+   ]
+  },
+  "cuero": {
+   "id": "brown_leather",
+   "fuente": "polyhaven",
+   "mapas": {
+    "color": "recursos/texturas/brown_leather/brown_leather_albedo_1k.jpg",
+    "normal": "recursos/texturas/brown_leather/brown_leather_nor_gl_1k.jpg",
+    "rough": "recursos/texturas/brown_leather/brown_leather_rough_1k.jpg",
+    "disp": "recursos/texturas/brown_leather/brown_leather_disp_1k.png",
+    "ao": "recursos/texturas/brown_leather/brown_leather_ao_1k.jpg"
+   },
+   "dim_mm": [
+    400.0000059604645,
+    400.00003576278687
+   ]
+  }
+ },
+ "modelos": {
+  "helecho": [
+   {
+    "id": "fern_02",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/fern_02/fern_02_1k.blend"
+   }
+  ],
+  "hierba": [
+   {
+    "id": "grass_medium_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/grass_medium_01/grass_medium_01_1k.blend"
+   },
+   {
+    "id": "grass_medium_02",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/grass_medium_02/grass_medium_02_1k.blend"
+   },
+   {
+    "id": "grass_bermuda_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/grass_bermuda_01/grass_bermuda_01_1k.blend"
+   }
+  ],
+  "arbusto": [
+   {
+    "id": "shrub_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/shrub_01/shrub_01_1k.blend"
+   },
+   {
+    "id": "shrub_02",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/shrub_02/shrub_02_1k.blend"
+   },
+   {
+    "id": "shrub_04",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/shrub_04/shrub_04_1k.blend"
+   }
+  ],
+  "maleza": [
+   {
+    "id": "dandelion_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/dandelion_01/dandelion_01_1k.blend"
+   },
+   {
+    "id": "nettle_plant",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/nettle_plant/nettle_plant_1k.blend"
+   },
+   {
+    "id": "celandine_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/celandine_01/celandine_01_1k.blend"
+   }
+  ],
+  "rocas": [
+   {
+    "id": "rock_moss_set_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/rock_moss_set_01/rock_moss_set_01_1k.blend"
+   },
+   {
+    "id": "rock_moss_set_02",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/rock_moss_set_02/rock_moss_set_02_1k.blend"
+   }
+  ],
+  "arbol": [
+   {
+    "id": "island_tree_01",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/island_tree_01/island_tree_01_1k.blend"
+   },
+   {
+    "id": "island_tree_02",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/island_tree_02/island_tree_02_1k.blend"
+   },
+   {
+    "id": "island_tree_03",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/island_tree_03/island_tree_03_1k.blend"
+   }
+  ],
+  "tronco": [
+   {
+    "id": "dead_tree_trunk",
+    "fuente": "polyhaven",
+    "blend": "recursos/modelos/dead_tree_trunk/dead_tree_trunk_1k.blend"
+   }
+  ]
+ },
+ "hdri": {
+  "id": "rogland_moonlit_night",
+  "fuente": "polyhaven",
+  "path": "recursos/hdri/rogland_moonlit_night_1k.hdr"
+ }
+}
