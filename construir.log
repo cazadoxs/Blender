@@ -1,0 +1,40 @@
+    nettle_plant_2k.blend: nettle_plant_tall_b_LOD0(4040, 0.2m), nettle_plant_tall_a_LOD0(3492, 0.2m), nettle_plant_small_b_LOD0(544, 0.1m), nettle_plant_small_a_LOD0(1796, 0.1m), nettle_plant_medium_b_LOD0(2832, 0.1m), nettle_plant_medium_a_LOD0(2948, 0.1m)
+    celandine_01_2k.blend: celandine_01_e_LOD0(221, 0.2m), celandine_01_d_LOD0(1550, 0.2m), celandine_01_c_LOD0(2225, 0.3m), celandine_01_b_LOD0(300, 0.3m), celandine_01_a_LOD0(312, 0.3m)
+  maleza: 16 modelos escaneados
+    rock_moss_set_01_2k.blend: rock_moss_set_01_rock06(8994, 2.8m), rock_moss_set_01_rock05(16548, 3.0m), rock_moss_set_01_rock04(10589, 2.1m), rock_moss_set_01_rock03(5000, 2.1m), rock_moss_set_01_rock02(10996, 3.3m), rock_moss_set_01_rock01(11000, 3.4m)
+    rock_moss_set_02_2k.blend: rock_moss_set_02_rock13(7928, 2.1m), rock_moss_set_02_rock12(7999, 1.6m), rock_moss_set_02_rock11(8000, 2.0m), rock_moss_set_02_rock10(8000, 2.2m), rock_moss_set_02_rock09(7894, 1.6m), rock_moss_set_02_rock08(8000, 1.2m), rock_moss_set_02_rock07(9826, 2.5m)
+  rocas: 13 modelos escaneados
+  hiedra en la locomotora: 178 tallos, 7260 hojas
+  hiedra y lianas en la bóveda: 579 tallos, 19815 hojas
+[  26.9 s] Luna, cielo y niebla
+[  27.0 s] Personaje
+  polo pierna.L: 90 grados (error 0.001 m)
+  polo pierna.R: 90 grados (error 0.001 m)
+  polo antebrazo.L: 160 grados (error 0.001 m)
+  polo antebrazo.R: 20 grados (error 0.001 m)
+[  34.6 s] Monstruo
+[  42.4 s] Animación: personaje, monstruo y tren
+  eventos: llega_pozo=25.5, corte_bajada=31.0, pisa_suelo=47.6, mira_lados=49.5, empieza_andar=56.9, para=98.2, ruido1=96.4, mira_atras=102.2, mira_hueco=107.8, asoma=107.4, asoma_fin=119.0, grito=124.7, cae=124.9, corre=126.2, llega_loco=151.2, dentro=153.7, regulador=155.1, tren_t0=155.6, tren_t1=156.2, tren_tb=176.2, tren_te=179.9, tren_t_boca=164.9, tren_t_tip=181.4, tren_t_caida=182.5, tren_t_impacto=185.7, tren_ten_edge=183.5, se_asoma=165.9, ve_monstruo=166.8, mira_delante=172.3, freno=176.2, fin=193.2, aterriza=126.1, ruge=126.7, persigue=129.3, techo=139.9, monstruo_borde=182.6, grito_final=183.0, mira_camara=187.7
+[  44.9 s] Cámaras y planos
+  primera persona: 185.7 s (4457 fotogramas), 25 momentos
+Instancias: 473664 en total
+   Arbustos valle                           159358
+   Arbustos monte lejos                     98721
+   Hierba monte                             47672
+   Helechos monte                           33096
+   Arbustos monte                           24199
+   Maleza monte                             17940
+   Polvo                                    17000
+   Bosque                                   15452
+   Bosque monte                             14533
+   Hierba Escombros tierra.007              12348
+   Hierba acantilado                        10379
+   Arbustos acantilado                      4739
+[  55.1 s] Guardando
+Info: Saved as "via_muerta.blend"
+Info: Total files 657 | Changed 0 | Failed 0
+Info: Saved "via_muerta.blend"
+[  56.7 s] Hecho: /home/runner/work/Blender/Blender/escenas/via_muerta/via_muerta.blend
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:34:58)
+
+Blender quit
