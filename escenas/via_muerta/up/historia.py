@@ -746,6 +746,8 @@ def person_train(pe, stand, yaw_in):
 
 # ------------------------------------------------------------------ el monstruo
 ZF = cfg.SLEEPER_TOP
+FIN_TRAS_IMPACTO = 7.5                # negro tras el golpe (se oye al monstruo) antes del título
+HEAD_YP = 0.3                         # cuánto del giro/cabeceo de la cabeza se aplica
 HW, WH, RA = cfg.HALF_W, cfg.WALL_H, cfg.R_ARCH
 WALL = WH - ZF
 ARC = math.pi * RA
@@ -898,20 +900,25 @@ def monster_story(MR, ctx):
     # persigue al tren: detrás del ténder, se va quedando atrás y se acerca cuando frena
     P = tren.P
     edge = cfg.GAP[0] - 2.8
-    t_stop_follow = P.get('t_tip', P['te'] + 1.5) + 3.0
+    t_tip = P.get('t_tip', P['te'] + 1.5)
+    t_stop_follow = t_tip + 3.0
     ts_ = np.arange(t_reg + 0.6, t_stop_follow, 1 / FPS)
     want = []
     for t in ts_:
         s_rear = cfg.LOCO_FRONT - 17.6 + tren.s_of_t(t)
-        gap = 6.0 + 1.5 * min(10.0, t - t_reg) - 8.0 * smoothstep(P['tb'], P['te'], t)
-        want.append(min(s_rear - max(5.5, gap), edge))
+        gap = 6.0 + 1.5 * min(10.0, t - t_reg) - 14.0 * smoothstep(P['tb'], P['te'], t)
+        w = min(s_rear - max(5.5, gap), edge)
+        # cuando el tren se asoma al vacío, se lanza al borde (lo vemos rugir mientras caemos)
+        if t > t_tip - 0.6:
+            w = edge
+        want.append(w)
     # sin saltos: velocidad máxima y frenada limitadas
     y = 35.0
     vy = 0.0
     ys = []
     for w in want:
-        dv = float(np.clip((w - y) * 2.0 - vy, -9.0 / FPS, 6.0 / FPS))
-        vy = min(13.0, max(0.0, vy + dv))
+        dv = float(np.clip((w - y) * 2.0 - vy, -9.0 / FPS, 10.0 / FPS))
+        vy = min(16.0, max(0.0, vy + dv))
         y = min(y + vy / FPS, edge)
         if y >= edge - 1e-3:
             vy = 0.0
@@ -927,25 +934,30 @@ def monster_story(MR, ctx):
         mo.key(t, pos, (0, 1, 0), up)
         if t_edge is None and y >= edge - 0.5:
             t_edge = t
+        if t_edge is not None and t > t_edge + 0.1:
+            break
     if t_edge is None:
         t_edge = float(ts_[-1])
     EV['monstruo_borde'] = t_edge
-    t_k = max(t_edge, float(ts_[-1])) + 0.8
-    mo.key(t_k, (0, edge - 0.3, 2.3), (0, 1, -0.35), (0, 0.35, 1))
+    t_k = t_edge + 0.6
+    # se adelanta hasta el mismo borde roto y se asoma por encima del vacío (desde abajo se le ve)
+    lip = cfg.GAP[0] - 1.1
+    mo.key(t_k, (0, lip, 2.3), (0, 1, -0.45), (0, 0.45, 1))
     t_imp = P.get('t_impacto', t_k + 3.0)
-    t_fin = t_imp + 12.0
-    mo.key(max(t_k + 1.0, t_imp + 2.0), (0, edge - 0.2, 2.2), (0, 1, -0.5), (0, 0.5, 1))
-    mo.key(t_fin, (0.05, edge - 0.25, 2.25), (0, 1, -0.45), (0, 0.45, 1))
-    # mira abajo al valle; tras el estruendo lejano ruge y luego se vuelve despacio hacia la cámara
-    t_g = t_imp + 2.2
-    mo.head += [(t_edge, (0, 0, 0)), (t_edge + 1.0, (0, 0.35, 0)), (t_g - 0.5, (0, 0.45, 0.1)),
-                (t_g + 2.6, (0, 0.3, 0.05)), (t_g + 4.4, (-0.62, 0.08, 0.28)), (t_fin, (-0.66, 0.05, 0.3))]
-    mo.jaw += [(t_edge + 0.5, 0.05), (t_g - 0.2, 0.05), (t_g + 0.4, 0.62), (t_g + 2.2, 0.66), (t_g + 2.8, 0.12),
-               (t_g + 5.0, 0.08), (t_g + 5.8, 0.3), (t_fin, 0.28)]
-    mo.glow += [(t_edge, (1.0, 0.5)), (t_g, (1.0, 0.5)), (t_g + 0.4, (1.0, 1.0)), (t_g + 2.5, (1.0, 1.0)),
-                (t_g + 3.2, (1.0, 0.4)), (t_g + 5.8, (1.0, 0.7))]
-    EV['grito_final'] = t_g + 0.4
-    EV['mira_camara'] = t_g + 4.4
+    t_fin = t_imp + FIN_TRAS_IMPACTO
+    mo.key(max(t_k + 1.0, t_imp + 2.0), (0, lip + 0.1, 2.2), (0, 1, -0.6), (0, 0.6, 1))
+    mo.key(t_fin, (0.05, lip, 2.25), (0, 1, -0.55), (0, 0.55, 1))
+    # llega al borde y ruge hacia abajo, a nosotros, mientras caemos (se ve en primera persona);
+    # tras el golpe, en negro, se le oye rugir otra vez arriba
+    t_g = t_edge + 0.1
+    mo.head += [(t_edge - 0.6, (0, 0, 0)), (t_edge + 0.2, (0, 0.5, 0.1)), (t_g + 1.6, (0.1, 0.55, 0.2)),
+                (t_g + 3.2, (0, 0.4, 0.05)), (t_fin, (-0.3, 0.3, 0.2))]
+    mo.jaw += [(t_edge - 0.4, 0.05), (t_g - 0.1, 0.1), (t_g + 0.35, 0.66), (t_g + 2.4, 0.7), (t_g + 3.0, 0.12),
+               (t_fin, 0.1)]
+    mo.glow += [(t_edge - 1.0, (1.0, 0.5)), (t_g, (1.0, 0.6)), (t_g + 0.35, (1.0, 1.0)), (t_g + 2.6, (1.0, 1.0)),
+                (t_g + 3.4, (1.0, 0.5))]
+    EV['grito_final'] = t_g + 0.35
+    EV['mira_camara'] = t_imp + 2.0
     return mo
 
 
@@ -984,7 +996,10 @@ def monster_bake(mo, t_from, t_to):
     hq, jq = [], []
     for t in ts:
         y, p_, r_ = hd(t)
-        e = Euler((p_ + nz(t, 41, 1.5) * 0.04, r_, y + nz(t, 42, 1.2) * 0.05), 'ZXY')
+        # la cara va en la caja de humos: el alabeo (sobre el eje de la caldera) es libre, pero el giro
+        # y el cabeceo se quedan cortos para que la caja de humos no se despegue de la caldera
+        y, p_ = y * HEAD_YP, p_ * HEAD_YP
+        e = Euler((p_ + nz(t, 41, 1.5) * 0.015, r_, y + nz(t, 42, 1.2) * 0.02), 'ZXY')
         hq.append((rh.inverted() @ e.to_matrix() @ rh).to_quaternion())
         j = jw(t) + max(0.0, nz(t, 43, 9)) * 0.03
         jq.append((rj.inverted() @ Euler((-j, 0, 0)).to_matrix() @ rj).to_quaternion())
@@ -1072,7 +1087,7 @@ def build(main, ctx):
         if k in tren.P:
             EV['tren_' + k] = float(tren.P[k])
     person_train(pe, stand, yaw_in)
-    t_end = tren.P.get('t_impacto', tren.P['te'] + 8) + 12.0
+    t_end = tren.P.get('t_impacto', tren.P['te'] + 8) + FIN_TRAS_IMPACTO
     EV['fin'] = t_end
     mo = monster_story(ctx['monstruo'], ctx)
     pe.bake(-1.0, t_end)

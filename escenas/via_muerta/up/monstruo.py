@@ -145,10 +145,13 @@ def body(c, mats):
             obs.append(cyl('Remache', c, 0.016, 0.03, (math.cos(a) * (BOILER_R + 0.05), y + 0.04, math.sin(a) * (BOILER_R + 0.05)),
                            rust, rot=(math.pi / 2, 0, 0), seg=6))
     # caja de humos (más ancha) que enmarca la cara
-    sb = cyl('Monstruo caja humos', c, BOILER_R + 0.12, 0.5, (0, Y_FRONT + 0.25, 0.02), soot, rot=(math.pi / 2, 0, 0), seg=72)
-    obs.append(sb)
+    # (va con la cabeza, no con el cuerpo: si no, al girar la cabeza la cara se sale de su marco;
+    #  se mete 0.35 m sobre la caldera para que al girar no se abra hueco en la junta)
+    sb = cyl('Monstruo caja humos', c, BOILER_R + 0.12, 0.85, (0, Y_FRONT + 0.075, 0.02), soot, rot=(math.pi / 2, 0, 0), seg=72)
     rim = cyl('Monstruo borde cara', c, BOILER_R + 0.17, 0.08, (0, Y_FRONT + 0.48, 0.02), rust, rot=(math.pi / 2, 0, 0), seg=72)
-    obs.append(rim)
+    collar = cyl('Monstruo collar', c, BOILER_R + 0.16, 0.07, (0, Y_FRONT - 0.31, 0.02), rust, rot=(math.pi / 2, 0, 0), seg=72)
+    smoke = join([sb, rim, collar], 'Monstruo caja de humos')
+    bevel(smoke, 0.006, 1)
     # chimenea torcida y con el borde roto
     ch = cyl('Monstruo chimenea', c, 0.25, 1.05, (0, Y_FRONT - 0.15, BOILER_R + 0.45), soot, r2=0.21, seg=40)
     ch.rotation_euler = (math.radians(-12), math.radians(4), 0)
@@ -220,7 +223,7 @@ def body(c, mats):
     bevel(hull, 0.006, 1)
     glow = join(glow_parts, 'Monstruo ventanas')
     glow.data.materials.append(mats['brasa'])
-    return hull, glow
+    return hull, glow, smoke
 
 
 # ------------------------------------------------------------------ cara
@@ -506,7 +509,7 @@ def build(main, ctx):
         'cuenca': mat_brasa('Monstruo cuenca', (0.5, 0.05, 0.01), 1.5),
         'ojo': mat_ojo(),
     }
-    hull, glow = body(c, mats)
+    hull, glow, smoke = body(c, mats)
     upper, lower, inner, eyes = face(c, mats)
     legs, legm = {}, {}
     for name, s, ya in LEGS:
@@ -516,7 +519,7 @@ def build(main, ctx):
     arm = armature(c, legs)
     for o in (hull, glow):
         bone_parent(o, arm, 'cuerpo')
-    for o in [upper, inner] + eyes:
+    for o in [upper, inner, smoke] + eyes:
         bone_parent(o, arm, 'cabeza')
     bone_parent(lower, arm, 'mandibula')
     for name, m in legm.items():

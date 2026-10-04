@@ -54,6 +54,28 @@ def sky_nodes(nb, moon_only=False):
     sky = nb.vmath('ADD', grad, stars_rgb)
     sky = nb.mix(nb.math('MULTIPLY', cloud, 0.85), sky, cloud_col)
     sky = nb.vmath('ADD', sky, nb.vmath('MULTIPLY', moon_rgb, nb.combine(*(nb.math('SUBTRACT', 1.0, nb.math('MULTIPLY', cloud, 0.7)),) * 3)))
+    # anochecer: el sol acaba de ponerse justo al lado contrario de la luna (que sale por el este).
+    # Queda un resplandor rojizo pegado al horizonte del oeste, un cinturón malva por encima y el
+    # cenit todavía azul; las nubes de ese lado cogen el rojo por debajo. 'Atardecer' (1 → 0) se
+    # anima en guion.py: el cielo se va apagando a lo largo del corto.
+    dusk = nb.n('ShaderNodeValue', name='Atardecer', label='Atardecer')
+    dusk.outputs[0].default_value = 1.0
+    D = nb.out(dusk)
+    W = Vector((-M[0], -M[1], 0.0)).normalized()
+    dh = nb.vmath('NORMALIZE', nb.vmath('MULTIPLY', d, (1.0, 1.0, 0.0)))
+    dw = nb.math('MAXIMUM', nb.vmath('DOT_PRODUCT', dh, tuple(W)), 0.0)
+    low = nb.math('POWER', nb.maprange(zc, 0.0, 0.32, 1.0, 0.0), 2.2)
+    hot = nb.math('MULTIPLY', nb.math('MULTIPLY', low, nb.math('POWER', dw, 2.5)), nb.maprange(z, -0.02, 0.0, 0.0, 1.0))
+    belt = nb.math('MULTIPLY', nb.maprange(zc, 0.02, 0.45, 1.0, 0.0), nb.math('ADD', 0.35, nb.math('MULTIPLY', dw, 0.65)))
+    dusk_rgb = nb.vmath('ADD', nb.vmath('MULTIPLY', (0.95, 0.30, 0.07), nb.combine(hot, hot, hot)),
+                        nb.vmath('MULTIPLY', (0.16, 0.10, 0.17), nb.combine(belt, belt, belt)))
+    zen = nb.math('POWER', zc, 0.6)
+    dusk_rgb = nb.vmath('ADD', dusk_rgb, nb.vmath('MULTIPLY', (0.02, 0.04, 0.10), nb.combine(zen, zen, zen)))
+    # nubes del lado del oeste encendidas por debajo, las demás grises oscuras contra el cielo claro
+    cl_w = nb.math('MULTIPLY', cloud, nb.math('ADD', 0.15, nb.math('MULTIPLY', nb.math('POWER', dw, 1.5), 0.85)))
+    dusk_rgb = nb.mix(nb.math('MULTIPLY', cloud, 0.75), dusk_rgb,
+                      nb.vmath('MULTIPLY', (0.55, 0.16, 0.06), nb.combine(cl_w, cl_w, cl_w)))
+    sky = nb.vmath('ADD', sky, nb.vmath('MULTIPLY', dusk_rgb, nb.combine(D, D, D)))
     # por debajo del horizonte: oscuro
     below = nb.maprange(z, -0.02, 0.0, 0.0, 1.0)
     return nb.mix(below, (0.002, 0.0025, 0.004), sky)

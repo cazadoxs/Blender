@@ -237,6 +237,7 @@ def breathing():
     b(EV['corre'], EV['llega_loco'], 0.55, 0.2, 0.5)
     b(EV['llega_loco'], EV['tren_t_boca'] + 1.0, 0.75, 0.17, 0.4)
     b(EV['tren_t_boca'] + 1.0, EV['tren_t_tip'], 0.9, 0.13, 0.4)
+    b(EV['tren_t_tip'], EV['tren_t_impacto'], 0.42, 0.24, 0.7)       # cae: jadea
     # el grito ahogado al verlo y al ver que se acaba la vía
     for t0, g in ((EV['asoma'] + 6.6, 0.25), (EV['ve_monstruo'], 0.2), (EV['mira_delante'] + 0.4, 0.25)):
         L = int(0.7 * SR)
@@ -402,11 +403,6 @@ def train():
     xf = np.arange(Lf) / SR
     whoosh = bandpass(rng.standard_normal(Lf), 500, 0.5) * (xf / xf[-1]) ** 1.5
     place(bus, norm(whoosh), EV['tren_t_caida'], 0.0, 0.5)
-    # el estruendo lejano en el valle (llega un poco tarde)
-    Li = int(6.0 * SR)
-    xi = np.arange(Li) / SR
-    boom = lowpass(rng.standard_normal(Li), 120) * np.exp(-xi / 1.4) + 0.3 * bandpass(rng.standard_normal(Li), 600, 1) * np.exp(-xi / 0.6)
-    place(bus, norm(boom), EV['tren_t_impacto'] + 0.35, 0.0, 0.9)
     bus = reverb(bus, 2.0, 0.3, seed=37)
     # dentro del túnel suena más encerrado
     return muffle(bus, inside * 0.3, 2500)
@@ -540,9 +536,32 @@ def music():
     return bus
 
 
+# --------------------------------------------------------------------- el golpe (primera persona)
+def impact_fx():
+    """Vamos dentro de la máquina: el golpe es nuestro. Hierro reventando, un pitido en los oídos
+    que se apaga despacio y nada más (arriba, lejos, el monstruo)."""
+    bus = np.zeros((2, N))
+    rng = np.random.default_rng(71)
+    ti = EV['tren_t_impacto']
+    Li = int(4.0 * SR)
+    xi = np.arange(Li) / SR
+    boom = lowpass(rng.standard_normal(Li), 110) * np.exp(-xi / 0.9)
+    crash = bandpass(rng.standard_normal(Li), 1800, 0.9) * np.exp(-xi / 0.25)
+    clang = sum(np.sin(2 * np.pi * f * xi) * np.exp(-xi / d) for f, d in ((233, 0.9), (617, 0.6), (1291, 0.35)))
+    place(bus, norm(norm(boom) + 0.7 * norm(crash) + 0.25 * norm(clang)), ti, 0.0, 1.0)
+    Lt = int(6.5 * SR)
+    xt = np.arange(Lt) / SR
+    ring = np.sin(2 * np.pi * 3900 * xt) * np.minimum(1, xt / 0.3) * np.exp(-xt / 2.2)
+    place(bus, ring, ti + 0.25, 0.0, 0.05)
+    return bus
+
+
 # --------------------------------------------------------------------- mezcla
-mix = (night() * 0.5 + tunnel_tone() * 0.2 + drips() * 0.55 + breathing() * 0.8 + steps() * 0.9 +
-       monster() * 1.0 + train() * 0.9 + music() * 0.55)
+# en el golpe se corta todo lo nuestro (la noche, la respiración, el tren); queda el pitido,
+# el monstruo arriba y la música grave del final
+alive = 1 - smoothstep(EV['tren_t_impacto'] - 0.01, EV['tren_t_impacto'] + 0.03, t)
+mix = ((night() * 0.5 + tunnel_tone() * 0.2 + drips() * 0.55 + breathing() * 0.8 + steps() * 0.9 +
+        train() * 0.9) * alive + monster() * 1.0 + music() * 0.55 + impact_fx() * 1.0)
 # el silencio total antes del grito (solo la respiración contenida y el latido)
 duck = 1 - 0.85 * (smoothstep(EV['grito'] - 2.2, EV['grito'] - 1.6, t) * (1 - smoothstep(EV['grito'] - 0.02, EV['grito'], t)))
 mix *= duck
