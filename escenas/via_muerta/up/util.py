@@ -201,6 +201,10 @@ class NB:
         for s in socks:
             if s.identifier == key or s.name == key:
                 return s
+        # Blender 5.2: nodos con un solo juego de sockets ('Min_002' -> 'Min')
+        base, _, suf = key.rpartition('_')
+        if base and suf.isdigit():
+            return NB._sock(socks, base)
         raise KeyError(key)
 
     def out(self, node, key=0):
