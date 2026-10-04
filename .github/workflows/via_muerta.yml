@@ -15,7 +15,7 @@ on:
         default: '24'
   push:
     branches: [claude/corto-terror-nocturno-41r3pk]
-    paths: ['escenas/via_muerta/**', '.github/workflows/via_muerta.yml']
+    paths: ['.github/workflows/via_muerta.yml']
 
 permissions:
   contents: write
