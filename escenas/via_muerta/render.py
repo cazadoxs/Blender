@@ -10,7 +10,9 @@ Desde esta carpeta, en Windows:
   %BLENDER% -b via_muerta.blend -P render.py -- --gpu --frames 60,550 --out pruebas
 
 Opciones:
-  --muestras N   muestras por píxel (por defecto 256; el ruido lo limpia OpenImageDenoise)
+  --calidad equilibrada|maxima   (por defecto equilibrada: 128 muestras y niebla más ligera de
+                 calcular; maxima: 256 muestras y todos los rebotes, varias veces más lenta)
+  --muestras N   fuerza las muestras por píxel (el ruido lo limpia OpenImageDenoise)
   --pct N        porcentaje de resolución sobre 1920x804
 """
 import bpy, sys, os, time, argparse, json
@@ -23,7 +25,8 @@ ap.add_argument('--prueba', action='store_true')
 ap.add_argument('--start', type=int, default=None)
 ap.add_argument('--end', type=int, default=None)
 ap.add_argument('--frames', type=str, default=None)
-ap.add_argument('--muestras', type=int, default=256)
+ap.add_argument('--muestras', type=int, default=None)
+ap.add_argument('--calidad', choices=('equilibrada', 'maxima'), default='equilibrada')
 ap.add_argument('--pct', type=int, default=100)
 ap.add_argument('--out', type=str, default=None)
 a = ap.parse_args(argv)
@@ -58,7 +61,24 @@ if a.gpu:
         pass
 
 scene.render.resolution_percentage = a.pct
-cy.samples = a.muestras
+if a.calidad == 'equilibrada':
+    # casi igual a la vista, varias veces más rápido: la niebla con pasos más largos, menos rebotes
+    # (en un túnel oscuro casi no aportan) y menos muestras (el ruido lo limpia el denoiser)
+    cy.samples = 128
+    cy.adaptive_threshold = 0.025
+    cy.volume_step_rate = 3.0
+    cy.volume_max_steps = 256
+    cy.max_bounces = 6
+    cy.diffuse_bounces = 3
+    cy.glossy_bounces = 2
+    cy.transmission_bounces = 4
+    cy.transparent_max_bounces = 16
+    try:
+        cy.use_guiding = False            # el path guiding solo funciona con la CPU
+    except AttributeError:
+        pass
+if a.muestras:
+    cy.samples = a.muestras
 scene.render.use_overwrite = False
 scene.render.use_placeholder = True
 scene.render.use_persistent_data = True
