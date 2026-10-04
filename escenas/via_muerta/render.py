@@ -103,6 +103,11 @@ ranges = [(f, e - 1, n) for (f, n), e in zip(shots, ends)]
 out_dir = a.out or os.path.join('render', 'frames')
 out_dir = out_dir if os.path.isabs(out_dir) else os.path.join(here, out_dir)
 os.makedirs(out_dir, exist_ok=True)
+# un corte a medias deja archivos vacíos reservados (placeholders); se borran para no saltarse esos fotogramas
+for n in os.listdir(out_dir):
+    q = os.path.join(out_dir, n)
+    if n.endswith('.png') and os.path.getsize(q) == 0:
+        os.remove(q)
 
 
 def one(f):
