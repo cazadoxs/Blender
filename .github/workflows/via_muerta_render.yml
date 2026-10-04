@@ -9,7 +9,7 @@ on:
     inputs:
       frames:
         description: Fotogramas a renderizar
-        default: '481,2700'
+        default: '2700,481'
   push:
     branches: [claude/corto-terror-nocturno-41r3pk]
     paths: ['.github/workflows/via_muerta_render.yml']
@@ -41,8 +41,13 @@ jobs:
           curl -sL "https://download.blender.org/release/Blender5.2/$v" | tar xJ
           echo "$(ls -d /tmp/blender-5.2*/ | head -1)" >> $GITHUB_PATH
           sudo apt-get install -y -q libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
-      - name: Comprobar Blender
-        run: blender --version | head -1
+      - name: Comprobar Blender y añadir memoria de intercambio
+        run: |
+          blender --version | head -1
+          # 16 GB de RAM se quedan cortos con 470.000 instancias de vegetación: 24 GB de swap en el disco grande
+          sudo swapoff -a || true
+          sudo fallocate -l 24G /mnt/swapfile && sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile >/dev/null && sudo swapon /mnt/swapfile
+          free -g
       - uses: actions/cache@v4
         with:
           path: escenas/via_muerta/recursos
@@ -55,7 +60,8 @@ jobs:
       - name: Renderizar
         run: |
           nproc; free -g
-          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "${{ inputs.frames || '481,2700' }}" --out render/frames 2>&1 | grep -E "Fotograma|rror|GPU|CPU" | tee render.log
+          (while sleep 120; do echo "memoria: $(free -m | awk '/Mem/{print $3}') MB usados, swap $(free -m | awk '/Swap/{print $3}') MB"; done) &
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "${{ inputs.frames || '2700,481' }}" --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror|GPU|CPU|Sample 1/|Sample 64/|Sample 128/" | tee render.log
       - name: Publicar en la rama pruebas-via-muerta-render
         if: always()
         run: |
