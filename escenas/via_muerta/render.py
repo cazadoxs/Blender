@@ -10,7 +10,7 @@ Desde esta carpeta, en Windows:
   %BLENDER% -b via_muerta.blend -P render.py -- --gpu --frames 60,550 --out pruebas
 
 Opciones:
-  --calidad equilibrada|maxima   (por defecto equilibrada: 128 muestras y niebla más ligera de
+  --calidad equilibrada|maxima   (por defecto maxima. equilibrada: 128 muestras y niebla más ligera de
                  calcular; maxima: 256 muestras y todos los rebotes, varias veces más lenta)
   --muestras N   fuerza las muestras por píxel (el ruido lo limpia OpenImageDenoise)
   --pct N        porcentaje de resolución sobre 1920x804
@@ -26,7 +26,7 @@ ap.add_argument('--start', type=int, default=None)
 ap.add_argument('--end', type=int, default=None)
 ap.add_argument('--frames', type=str, default=None)
 ap.add_argument('--muestras', type=int, default=None)
-ap.add_argument('--calidad', choices=('equilibrada', 'maxima'), default='equilibrada')
+ap.add_argument('--calidad', choices=('equilibrada', 'maxima'), default='maxima')
 ap.add_argument('--pct', type=int, default=100)
 ap.add_argument('--out', type=str, default=None)
 a = ap.parse_args(argv)
