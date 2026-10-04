@@ -8,7 +8,7 @@ on:
     inputs:
       frames:
         description: Fotogramas a renderizar
-        default: '97,481,841,1273,1873,2641,2737,2833,3361,3601,3769,3865,4057,4177,4345,4657'
+        default: '97,481,700,841,1273,2420,2700,3000,3217,3740,3880,4000,4140,4300,4390,4420'
       ancho:
         default: '768'
       muestras:
@@ -48,7 +48,7 @@ jobs:
       - name: Construir escena
         run: python -u -c "import sys, runpy; sys.argv=['construir_escena.py']; runpy.run_path('construir_escena.py', run_name='__main__')" 2>&1 | tee construir.log
       - name: Renderizar pruebas
-        run: python -u prueba_nube.py --frames "${{ inputs.frames || '97,481,841,1273,1873,2641,2737,2833,3361,3601,3769,3865,4057,4177,4345,4657' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
+        run: python -u prueba_nube.py --frames "${{ inputs.frames || '97,481,700,841,1273,2420,2700,3000,3217,3740,3880,4000,4140,4300,4390,4420' }}" --ancho "${{ inputs.ancho || '768' }}" --muestras "${{ inputs.muestras || '24' }}" --out pruebas 2>&1 | grep -E "FOTOGRAMA|Error|rror" | tee render.log
       - name: Publicar en la rama pruebas-via-muerta
         if: always()
         run: |

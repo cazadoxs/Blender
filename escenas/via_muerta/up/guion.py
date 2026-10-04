@@ -149,7 +149,11 @@ def attention(ev):
     P = tren.P
     L = [
         (ev['asoma'] + 0.3, ev['corre'] + 0.3, 0.8, 0.9, mon_face),                  # se asoma, cae y ruge
+        # en el túnel, asomado: viene detrás, a la luz del farol de cola
+        (P['t1'] + 2.3, P['t_boca'] - 0.9, 0.7, 0.9, lambda t: mon_pos(t) + Vector((0, 0, 0.4))),
         (ev['se_asoma'] + 0.3, ev['se_asoma'] + 5.3, 0.7, 0.95, lambda t: mon_pos(t) + Vector((0, 0, 0.4))),
+        # asomado hacia delante: la vía se acaba en el puente roto
+        (ev['mira_delante'] - 0.6, ev['freno'] - 0.3, 0.6, 0.85, lambda t: Vector((0.0, cfg.GAP[0] + 2.0, cfg.RAIL_TOP))),
         (P.get('t_tip', P['te'] + 1.4) + 0.4, P.get('t_impacto', P['te'] + 5) + 1.0, 0.9, 1.0, mon_face),
     ]
     for tt in ev.get('mira_corriendo', []):
@@ -178,8 +182,9 @@ def pov_camera(cam, arm, ev, t_end):
     for i, t in enumerate(ts):
         p = Vector(pos[i])
         # al volcar se asoma por la puerta de la cabina para ver hacia atrás
-        k = max(smoothstep(t_tip - 0.2, t_tip + 0.8, t),
-                env(t, ev['se_asoma'] - 0.2, ev['se_asoma'] + 5.8, 0.8))      # asomado para mirar atrás
+        k = max(smoothstep(t_tip - 0.2, t_tip + 0.8, t),                       # asomado por la puerta:
+                env(t, P['t1'] + 2.0, P['t_boca'] - 0.6, 0.8),                     # atrás, en el túnel
+                env(t, ev['se_asoma'] - 0.2, ev['freno'] - 0.1, 0.8))              # atrás y luego delante
         if k > 0:
             p = p.lerp(maq(t, door), k)
         F = Vector(fw[i]).normalized()

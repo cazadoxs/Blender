@@ -11,7 +11,7 @@ import bpy
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 ap = argparse.ArgumentParser()
 ap.add_argument('--blend', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'via_muerta.blend'))
-ap.add_argument('--frames', default='97,481,841,1273,1873,2641,2737,2833,3361,3601,3769,3865,4057,4177,4345,4657')
+ap.add_argument('--frames', default='97,481,700,841,1273,2420,2700,3000,3217,3740,3880,4000,4140,4300,4390,4420')
 ap.add_argument('--ancho', type=int, default=960)
 ap.add_argument('--muestras', type=int, default=32)
 ap.add_argument('--out', default='pruebas')
