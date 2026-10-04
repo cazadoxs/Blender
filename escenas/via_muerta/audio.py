@@ -536,6 +536,26 @@ def music():
     return bus
 
 
+# --------------------------------------------------------------------- el frontal falla
+def flicker_fx():
+    """Chasquidos secos y un zumbido eléctrico cuando el frontal parpadea."""
+    bus = np.zeros((2, N))
+    rng = np.random.default_rng(57)
+    for t0, dur in T.get('parpadeos', []):
+        t = t0
+        while t < t0 + dur:
+            L = int(0.012 * SR)
+            x = np.arange(L) / SR
+            click = bandpass(rng.standard_normal(L), 3500, 1.2) * np.exp(-x / 0.003)
+            place(bus, click, t, 0.15, rng.uniform(0.25, 0.5))
+            t += rng.uniform(0.04, 0.16)
+        L = int(dur * SR)
+        x = np.arange(L) / SR
+        buzz = np.sign(np.sin(2 * np.pi * 100 * x)) * 0.5 + bandpass(rng.standard_normal(L), 2000, 0.7)
+        place(bus, lowpass(buzz, 3000) * np.minimum(1, np.minimum(x, x[-1] - x) / 0.05), t0, 0.15, 0.04)
+    return bus
+
+
 # --------------------------------------------------------------------- el golpe (primera persona)
 def impact_fx():
     """Vamos dentro de la máquina: el golpe es nuestro. Hierro reventando, un pitido en los oídos
@@ -561,7 +581,7 @@ def impact_fx():
 # el monstruo arriba y la música grave del final
 alive = 1 - smoothstep(EV['tren_t_impacto'] - 0.01, EV['tren_t_impacto'] + 0.03, t)
 mix = ((night() * 0.5 + tunnel_tone() * 0.2 + drips() * 0.55 + breathing() * 0.8 + steps() * 0.9 +
-        train() * 0.9) * alive + monster() * 1.0 + music() * 0.55 + impact_fx() * 1.0)
+        train() * 0.9 + flicker_fx() * 0.5) * alive + monster() * 1.0 + music() * 0.55 + impact_fx() * 1.0)
 # el silencio total antes del grito (solo la respiración contenida y el latido)
 duck = 1 - 0.85 * (smoothstep(EV['grito'] - 2.2, EV['grito'] - 1.6, t) * (1 - smoothstep(EV['grito'] - 0.02, EV['grito'], t)))
 mix *= duck

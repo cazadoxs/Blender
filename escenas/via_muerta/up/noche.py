@@ -83,7 +83,7 @@ def sky_nodes(nb, moon_only=False):
 
 def moon(c):
     d = bpy.data.lights.new('Luna', 'SUN')
-    d.energy = 1.1
+    d.energy = 0.8
     d.angle = math.radians(0.6)
     d.color = MOON_COLOR
     ob = bpy.data.objects.new('Luna', d)
@@ -199,8 +199,9 @@ def mat_niebla(name, density, scale, amt, color=(0.86, 0.9, 1.0), aniso=0.45, dr
 def volumes(c, ctx):
     from .tunel import top_z
     obs = []
-    # túnel: polvo y humedad en suspensión, más denso hacia el fondo; el haz del frontal se ve
-    m = mat_niebla('Niebla tunel', 0.045, 0.22, 0.8, color=(0.9, 0.93, 1.0), aniso=0.62, drift=(0.0, 0.05, 0.0))
+    # túnel: polvo y humedad en suspensión, más denso hacia el fondo; el haz del frontal se ve espeso
+    # y el aire se nota cargado (verdoso, de agua estancada)
+    m = mat_niebla('Niebla tunel', 0.075, 0.22, 0.8, color=(0.84, 0.9, 0.86), aniso=0.62, drift=(0.0, 0.05, 0.0))
     b = box('Volumen tunel', c, (2 * cfg.HALF_W + 0.2, cfg.Y1 + 4 - cfg.Y0, cfg.CROWN + 0.1),
             (0, (cfg.Y0 + cfg.Y1 + 4) / 2, cfg.CROWN / 2), m)
     b.display_type = 'BOUNDS'
@@ -213,12 +214,12 @@ def volumes(c, ctx):
     obs.append(b)
     # niebla baja que se arrastra por el monte (tres capas, cada vez más tenue)
     ground = lambda x, y: top_z(x, y)
-    for k, (zl, zh, dens) in enumerate(((-0.5, 1.2, 0.05), (1.2, 3.0, 0.025), (3.0, 6.5, 0.009))):
+    for k, (zl, zh, dens) in enumerate(((-0.5, 1.2, 0.08), (1.2, 3.0, 0.04), (3.0, 6.5, 0.015))):
         m = mat_niebla('Niebla monte %d' % k, dens, 0.035, 0.85, color=(0.82, 0.88, 1.0), aniso=0.5,
                        drift=(0.35, -0.12, 0.0))
         obs.append(terrain_shell('Niebla monte %d' % k, c, m, -125, 45, -175, -45, zl, zh, ground, step=2.5))
     # bruma general (perspectiva aérea nocturna): se aclara con la altura
-    m = M.mat_volumen('Bruma noche', 0.0011, aniso=0.6, color=(0.75, 0.82, 1.0), height_falloff=(0.246, 0.5))
+    m = M.mat_volumen('Bruma noche', 0.0018, aniso=0.6, color=(0.75, 0.82, 1.0), height_falloff=(0.246, 0.5))
     b = box('Volumen bruma', c, (9000, 8000, 1300), (0, 3000, 250), m)
     b.display_type = 'BOUNDS'
     obs.append(b)

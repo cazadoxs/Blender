@@ -14,6 +14,7 @@ from .anim import nz, smoothstep, lerp
 from .util import coll
 
 SHOTS = []      # (nombre, t0, t1, cámara)
+FLICKER = []    # (inicio, duración) de los fallos del frontal (el sonido les pone chasquidos)
 TITLE = 3.5     # segundos de negro con el título al final (los pone el montaje)
 
 
@@ -213,6 +214,42 @@ def hide_head(arm):
             o.visible_camera = False
 
 
+def flicker(ev):
+    """El frontal falla en los peores momentos: parpadeos cortos (pilas gastadas, un mal contacto)."""
+    P = tren.P
+    W = [(ev['ruido1'] + 0.3, 0.9, 0.9), (ev['mira_hueco'] - 1.0, 0.7, 0.8), (ev['asoma'] + 2.6, 1.3, 0.95),
+         (ev['grito'] + 0.05, 0.6, 0.9), (ev['ruge'] + 0.2, 0.9, 0.85)]
+    for k, tt in enumerate(ev.get('mira_corriendo', [])):
+        W.append((tt + 0.1, 0.45, 0.8))
+    W.append((ev['techo'] + 0.4, 0.6, 0.85))
+    rng = np.random.default_rng(13)
+    FLICKER[:] = [(round(t0, 3), dur) for t0, dur, depth in sorted(W)]
+    keys = [(-1.0, 1.0)]
+    for t0, dur, depth in sorted(W):
+        t = t0
+        keys.append((t0 - 1 / cfg.FPS, 1.0))
+        while t < t0 + dur:
+            r = rng.random()
+            v = 1.0 if r < 0.35 else (1.0 - depth * rng.uniform(0.5, 1.0))
+            keys.append((t, v))
+            t += rng.integers(1, 4) / cfg.FPS
+        keys.append((t0 + dur, 1.0))
+    return keys
+
+
+def headlamp_flicker(ev):
+    fk = flicker(ev)
+    for name in ('Frontal haz', 'Frontal halo'):
+        ob = bpy.data.objects.get(name)
+        if ob is None:
+            continue
+        base = ob.data.energy
+        A.bake_prop(ob.data, 'energy', [(t, base * v) for t, v in fk], interp='CONSTANT')
+    lens = bpy.data.objects.get('Frontal cristal')
+    if lens is not None:
+        A.bake_prop(lens, 'color', [(t, (1, 1, 1, v)) for t, v in fk], interp='CONSTANT')
+
+
 def beats(ev):
     """Momentos de la historia (marcadores): (nombre, t)."""
     P = tren.P
@@ -246,6 +283,7 @@ def build(main, ctx):
     cam.data.clip_start = 0.06
     pov_camera(cam, arm, ev, t_cut)
     hide_head(arm)
+    headlamp_flicker(ev)
     sc.camera = cam
     SHOTS.clear()
     B = beats(ev)
@@ -258,8 +296,9 @@ def build(main, ctx):
     tb = P['t_boca']
     # (en el salto de tiempo del brocal a la escalera, un parpadeo a negro)
     cb = ev['corte_bajada']
-    ex = [(0.0, 1.2), (cb - 0.45, 1.4), (cb - 0.08, -6.0), (cb + 0.12, -6.0), (cb + 0.6, 2.0), (ev['pisa_suelo'], 2.4),
-          (tb - 0.5, 2.4), (tb + 2.5, 1.7), (t_cut, 1.8)]
+    # (algo por debajo de lo "correcto": fuera del haz la oscuridad tiene que tragárselo todo)
+    ex = [(0.0, 1.0), (cb - 0.45, 1.2), (cb - 0.08, -6.0), (cb + 0.12, -6.0), (cb + 0.6, 1.8), (ev['pisa_suelo'], 2.15),
+          (tb - 0.5, 2.15), (tb + 2.5, 1.25), (t_cut, 1.35)]
     A.bake_prop(sc, 'view_settings.exposure', ex)
     # el cielo se va apagando: del último resplandor a casi noche
     w = sc.world
@@ -286,4 +325,5 @@ def timing(ctx):
         'patas': [round(m[0], 3) for m in H['msteps']],
         'tren': {k: round(float(v), 3) for k, v in tren.P.items() if isinstance(v, (int, float))},
         'ruedas': [round(t, 3) for t in tren.chuffs()] if hasattr(tren, 'chuffs') else [],
+        'parpadeos': FLICKER,
     }

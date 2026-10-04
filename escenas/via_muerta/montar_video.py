@@ -21,10 +21,13 @@ if sys.platform.startswith('win'):
 else:
     font = os.environ.get('FONT', '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf')
 vf = ','.join([
-    'eq=contrast=1.08:saturation=0.82:gamma=0.97',
-    'colorbalance=rs=-0.03:gs=-0.005:bs=0.05:rm=-0.02:bm=0.03:rh=0.02:bh=-0.01',
-    'vignette=angle=PI/4.2',
-    'noise=alls=7:allf=t',
+    # etalonaje de terror: negros aplastados, colores apagados, sombras verdosas y frías, luces
+    # algo amarillas (la linterna), viñeta muy cerrada y grano de película
+    'curves=all=0/0 0.12/0.06 0.5/0.47 1/0.98',
+    'eq=contrast=1.12:saturation=0.72:gamma=0.95',
+    'colorbalance=rs=-0.04:gs=0.01:bs=0.04:rm=-0.03:gm=0.01:bm=0.01:rh=0.03:gh=0.01:bh=-0.03',
+    'vignette=angle=PI/3.4',
+    'noise=alls=9:allf=t',
     'tpad=stop_mode=add:stop_duration=%.2f:color=black' % (black + dur),
     'fade=t=in:st=0:d=2.0',
     "drawtext=fontfile='%s':textfile=titulo.txt:fontsize=84:fontcolor=0xE8E2D8:x=(w-text_w)/2:y=(h-text_h)/2:alpha='%s'" % (font, alpha),

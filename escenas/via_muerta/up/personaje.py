@@ -541,9 +541,9 @@ def headlamp(c, mats):
     lens.data.materials.append(lm)
     lens.color = (1, 1, 1, 1)
     obs.append(lens)
-    # la luz: un foco estrecho y potente y un halo más ancho y débil
+    # la luz: un foco estrecho y potente y un halo débil (fuera del haz no se ve casi nada)
     lights = []
-    for name, size, blend, energy in (('Frontal haz', 26, 0.45, 30.0), ('Frontal halo', 75, 0.9, 7.0)):
+    for name, size, blend, energy in (('Frontal haz', 22, 0.45, 30.0), ('Frontal halo', 70, 0.9, 3.5)):
         ld = bpy.data.lights.new(name, 'SPOT')
         ld.spot_size = math.radians(size)
         ld.spot_blend = blend
@@ -551,7 +551,7 @@ def headlamp(c, mats):
         ld.shadow_soft_size = 0.012
         try:
             ld.use_temperature = True
-            ld.temperature = 6200
+            ld.temperature = 5000             # pilas gastadas: una luz algo amarillenta
         except AttributeError:
             ld.color = (0.93, 0.96, 1.0)
         lo = bpy.data.objects.new(name, ld)
