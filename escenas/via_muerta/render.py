@@ -14,6 +14,7 @@ Opciones:
                  calcular; maxima: 256 muestras y todos los rebotes, varias veces más lenta)
   --muestras N   fuerza las muestras por píxel (el ruido lo limpia OpenImageDenoise)
   --pct N        porcentaje de resolución sobre 1920x804
+  --limite T     con --frames: no empieza fotogramas nuevos pasada la hora T (segundos desde 1970)
 """
 import bpy, sys, os, time, argparse, json
 
@@ -29,6 +30,7 @@ ap.add_argument('--muestras', type=int, default=None)
 ap.add_argument('--calidad', choices=('equilibrada', 'maxima'), default='maxima')
 ap.add_argument('--pct', type=int, default=100)
 ap.add_argument('--out', type=str, default=None)
+ap.add_argument('--limite', type=float, default=None, help='hora límite (segundos desde 1970): no empieza fotogramas nuevos después')
 a = ap.parse_args(argv)
 
 here = os.path.dirname(bpy.data.filepath)
@@ -111,6 +113,9 @@ for n in os.listdir(out_dir):
 
 
 def one(f):
+    if a.limite and time.time() > a.limite:
+        print('Fotograma %d: no da tiempo, queda para la próxima vez' % f, flush=True)
+        return
     scene.frame_set(f)
     path = os.path.join(out_dir, 'f_%04d.png' % f)
     if os.path.exists(path) and os.path.getsize(path) > 0:

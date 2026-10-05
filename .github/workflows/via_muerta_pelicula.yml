@@ -3,7 +3,8 @@ name: Via muerta - película entera en GitHub (CPU)
 # Renderiza la película entera a calidad final (1920x804, --calidad equilibrada) en los ordenadores
 # gratuitos de GitHub. La película se parte en bloques de 10 fotogramas; cada bloque es un trabajo
 # y se guarda como un .tar en la release "via-muerta-fotogramas". Un bloque que ya está en la
-# release no se repite, así que se puede relanzar las veces que haga falta.
+# release no se repite, así que se puede relanzar las veces que haga falta. Si un bloque no cabe en
+# las 6 h de un trabajo, lo hecho se guarda como bloque_NNN_parte.tar y se termina al relanzar.
 # Una matriz admite como mucho 256 trabajos, así que hay dos (parte 1 y parte 2); GitHub los va
 # ejecutando de 20 en 20. Se lanza subiendo un cambio a escenas/via_muerta/render_github.txt.
 on:
@@ -57,10 +58,16 @@ jobs:
       - name: ¿Bloque ya hecho?
         id: hecho
         run: |
-          nombre=$(printf 'bloque_%03d.tar' ${{ matrix.bloque }})
+          echo "inicio=$(date +%s)" >> $GITHUB_OUTPUT
+          nombre=$(printf 'bloque_%03d' ${{ matrix.bloque }})
           echo "nombre=$nombre" >> $GITHUB_OUTPUT
-          if gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null | grep -qx "$nombre"; then
-            echo "Ya está en la release: $nombre"; echo "si=1" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null > /tmp/assets.txt || true
+          if grep -qx "$nombre.tar" /tmp/assets.txt; then
+            echo "Ya está en la release: $nombre.tar"; echo "si=1" >> $GITHUB_OUTPUT
+          elif grep -qx "${nombre}_parte.tar" /tmp/assets.txt; then
+            echo "Hay una parte hecha: se continúa"
+            mkdir -p render/frames && gh release download "$RELEASE" -p "${nombre}_parte.tar" -O /tmp/parte.tar && tar -xf /tmp/parte.tar -C render/frames
+            ls render/frames
           fi
       - uses: actions/setup-python@v5
         if: steps.hecho.outputs.si != '1'
@@ -92,14 +99,23 @@ jobs:
         run: |
           a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
           echo "Fotogramas $a a $b"
-          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --start $a --end $b --out render/frames 2>&1 | grep --line-buffered -E "Saved:|rror|Terminado" || true
-          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l)
-          echo "Hechos: $n"; [ "$n" -eq $(( b - a + 1 )) ]
+          # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
+          # lo que quede se guarda como parte y se termina en la siguiente ejecución
+          limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
       - name: Subir a la release
         if: steps.hecho.outputs.si != '1'
         run: |
-          tar -cf "${{ steps.hecho.outputs.nombre }}" -C render/frames .
-          gh release upload "$RELEASE" "${{ steps.hecho.outputs.nombre }}" --clobber
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
+          nombre="${{ steps.hecho.outputs.nombre }}"
+          [ "$n" -gt 0 ] || exit 0
+          if [ "$n" -eq $(( b - a + 1 )) ]; then
+            tar -cf "$nombre.tar" -C render/frames . && gh release upload "$RELEASE" "$nombre.tar" --clobber
+            gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
+          else
+            tar -cf "${nombre}_parte.tar" -C render/frames . && gh release upload "$RELEASE" "${nombre}_parte.tar" --clobber
+          fi
 
   parte2:
     needs: bloques
@@ -121,10 +137,16 @@ jobs:
       - name: ¿Bloque ya hecho?
         id: hecho
         run: |
-          nombre=$(printf 'bloque_%03d.tar' ${{ matrix.bloque }})
+          echo "inicio=$(date +%s)" >> $GITHUB_OUTPUT
+          nombre=$(printf 'bloque_%03d' ${{ matrix.bloque }})
           echo "nombre=$nombre" >> $GITHUB_OUTPUT
-          if gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null | grep -qx "$nombre"; then
-            echo "Ya está en la release: $nombre"; echo "si=1" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null > /tmp/assets.txt || true
+          if grep -qx "$nombre.tar" /tmp/assets.txt; then
+            echo "Ya está en la release: $nombre.tar"; echo "si=1" >> $GITHUB_OUTPUT
+          elif grep -qx "${nombre}_parte.tar" /tmp/assets.txt; then
+            echo "Hay una parte hecha: se continúa"
+            mkdir -p render/frames && gh release download "$RELEASE" -p "${nombre}_parte.tar" -O /tmp/parte.tar && tar -xf /tmp/parte.tar -C render/frames
+            ls render/frames
           fi
       - uses: actions/setup-python@v5
         if: steps.hecho.outputs.si != '1'
@@ -156,11 +178,20 @@ jobs:
         run: |
           a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
           echo "Fotogramas $a a $b"
-          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --start $a --end $b --out render/frames 2>&1 | grep --line-buffered -E "Saved:|rror|Terminado" || true
-          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l)
-          echo "Hechos: $n"; [ "$n" -eq $(( b - a + 1 )) ]
+          # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
+          # lo que quede se guarda como parte y se termina en la siguiente ejecución
+          limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
       - name: Subir a la release
         if: steps.hecho.outputs.si != '1'
         run: |
-          tar -cf "${{ steps.hecho.outputs.nombre }}" -C render/frames .
-          gh release upload "$RELEASE" "${{ steps.hecho.outputs.nombre }}" --clobber
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
+          nombre="${{ steps.hecho.outputs.nombre }}"
+          [ "$n" -gt 0 ] || exit 0
+          if [ "$n" -eq $(( b - a + 1 )) ]; then
+            tar -cf "$nombre.tar" -C render/frames . && gh release upload "$RELEASE" "$nombre.tar" --clobber
+            gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
+          else
+            tar -cf "${nombre}_parte.tar" -C render/frames . && gh release upload "$RELEASE" "${nombre}_parte.tar" --clobber
+          fi
