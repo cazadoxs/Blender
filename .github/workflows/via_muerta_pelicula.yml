@@ -102,7 +102,20 @@ jobs:
           # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
           # lo que quede se guarda como parte y se termina en la siguiente ejecución
           limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          # a veces GitHub apaga el ordenador a mitad: cada 10 min se sube lo hecho como parte para no
+          # perderlo (solo PNG con más de 1 min, ya escritos del todo)
+          mkdir -p render/frames /tmp/copia
+          copia=/tmp/copia/${{ steps.hecho.outputs.nombre }}_parte.tar
+          (prev=$(find render/frames -name 'f_*.png' -size +0 | wc -l); while sleep 600; do
+            n=$(find render/frames -name 'f_*.png' -size +0 -mmin +1 | wc -l)
+            if [ "$n" -gt "$prev" ]; then
+              (cd render/frames && find . -name 'f_*.png' -size +0 -mmin +1 | tar -cf "$copia" -T -) &&
+                gh release upload "$RELEASE" "$copia" --clobber >/dev/null && prev=$n && echo "Copia subida: $n fotogramas"
+            fi
+          done) &
+          copiando=$!
           blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
+          kill $copiando 2>/dev/null || true
       - name: Subir a la release
         if: steps.hecho.outputs.si != '1'
         run: |
@@ -181,7 +194,20 @@ jobs:
           # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
           # lo que quede se guarda como parte y se termina en la siguiente ejecución
           limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          # a veces GitHub apaga el ordenador a mitad: cada 10 min se sube lo hecho como parte para no
+          # perderlo (solo PNG con más de 1 min, ya escritos del todo)
+          mkdir -p render/frames /tmp/copia
+          copia=/tmp/copia/${{ steps.hecho.outputs.nombre }}_parte.tar
+          (prev=$(find render/frames -name 'f_*.png' -size +0 | wc -l); while sleep 600; do
+            n=$(find render/frames -name 'f_*.png' -size +0 -mmin +1 | wc -l)
+            if [ "$n" -gt "$prev" ]; then
+              (cd render/frames && find . -name 'f_*.png' -size +0 -mmin +1 | tar -cf "$copia" -T -) &&
+                gh release upload "$RELEASE" "$copia" --clobber >/dev/null && prev=$n && echo "Copia subida: $n fotogramas"
+            fi
+          done) &
+          copiando=$!
           blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
+          kill $copiando 2>/dev/null || true
       - name: Subir a la release
         if: steps.hecho.outputs.si != '1'
         run: |
