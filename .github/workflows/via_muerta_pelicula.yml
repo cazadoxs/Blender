@@ -123,11 +123,13 @@ jobs:
           n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
           nombre="${{ steps.hecho.outputs.nombre }}"
           [ "$n" -gt 0 ] || exit 0
+          # GitHub a veces responde HTTP 500 al subir: se reintenta antes de dar por perdido el bloque
+          subir() { for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$1" --clobber && return 0; echo "Fallo al subir, reintento $i"; sleep $(( 30 * i )); done; return 1; }
           if [ "$n" -eq $(( b - a + 1 )) ]; then
-            tar -cf "$nombre.tar" -C render/frames . && gh release upload "$RELEASE" "$nombre.tar" --clobber
+            tar -cf "$nombre.tar" -C render/frames . && subir "$nombre.tar"
             gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
           else
-            tar -cf "${nombre}_parte.tar" -C render/frames . && gh release upload "$RELEASE" "${nombre}_parte.tar" --clobber
+            tar -cf "${nombre}_parte.tar" -C render/frames . && subir "${nombre}_parte.tar"
           fi
 
   parte2:
@@ -215,9 +217,11 @@ jobs:
           n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
           nombre="${{ steps.hecho.outputs.nombre }}"
           [ "$n" -gt 0 ] || exit 0
+          # GitHub a veces responde HTTP 500 al subir: se reintenta antes de dar por perdido el bloque
+          subir() { for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$1" --clobber && return 0; echo "Fallo al subir, reintento $i"; sleep $(( 30 * i )); done; return 1; }
           if [ "$n" -eq $(( b - a + 1 )) ]; then
-            tar -cf "$nombre.tar" -C render/frames . && gh release upload "$RELEASE" "$nombre.tar" --clobber
+            tar -cf "$nombre.tar" -C render/frames . && subir "$nombre.tar"
             gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
           else
-            tar -cf "${nombre}_parte.tar" -C render/frames . && gh release upload "$RELEASE" "${nombre}_parte.tar" --clobber
+            tar -cf "${nombre}_parte.tar" -C render/frames . && subir "${nombre}_parte.tar"
           fi
