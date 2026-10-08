@@ -23,7 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Instalar ffmpeg
-        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg fonts-dejavu-core >/dev/null && ffmpeg -version | head -1
+        timeout-minutes: 15
+        # ffmpeg ya compilado desde GitHub (apt a veces se queda colgado en los runners)
+        run: |
+          curl -sSfL --retry 5 https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar xJ -C /tmp
+          echo /tmp/ffmpeg-master-latest-linux64-gpl/bin >> $GITHUB_PATH
+          /tmp/ffmpeg-master-latest-linux64-gpl/bin/ffmpeg -version | head -1
+          ls /usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf || (timeout 300 sudo apt-get install -y -q fonts-dejavu-core >/dev/null)
       - name: Bajar los fotogramas
         run: |
           sudo mkdir -p /mnt/peli && sudo chown $USER /mnt/peli && cd /mnt/peli
