@@ -1,0 +1,186 @@
+name: Via muerta - clips verticales en GitHub (CPU)
+
+# Renderiza en vertical (1080x1920) los tres clips para Shorts, Reels y TikTok con render_vertical.py
+# (misma cámara, los ojos) en los ordenadores gratuitos de GitHub, como via_muerta_pelicula.yml:
+#   1. La cara se asoma   fotogramas 2651-2979
+#   2. Persecución        fotogramas 3218-3630
+#   3. El freno           fotogramas 4136-4379
+# Los fotogramas van en bloques de 5 a la release "via-muerta-vertical". Un bloque ya subido no se
+# repite, así que se puede relanzar. Cuando están todos, el trabajo "montar" hace los tres .mp4 con
+# sonido y el etalonaje de la película y los sube a la misma release.
+# Se lanza subiendo un cambio a escenas/via_muerta/render_vertical_github.txt.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/via-muerta-verticales]
+    paths: ['escenas/via_muerta/render_vertical_github.txt']
+
+permissions:
+  contents: write
+
+env:
+  BLOQUE: 5
+  CLIPS: '01_la_cara:2651:2979 02_persecucion:3218:3630 03_el_freno:4136:4379'
+  RELEASE: via-muerta-vertical
+
+jobs:
+  bloques:
+    runs-on: ubuntu-latest
+    outputs:
+      lista: ${{ steps.l.outputs.lista }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - id: l
+        run: |
+          total=0; for c in $CLIPS; do IFS=: read n a b <<< "$c"; total=$(( total + b - a + 1 )); done
+          n=$(( (total + BLOQUE - 1) / BLOQUE ))
+          echo "Fotogramas: $total, bloques: $n"
+          echo "lista=[$(seq -s, 0 $(( n-1 )))]" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" >/dev/null 2>&1 || gh release create "$RELEASE" --prerelease --target "$GITHUB_SHA" --title "Vía muerta: clips verticales" --notes "Clips verticales (1080x1920) para Shorts, Reels y TikTok, generados por via_muerta_vertical.yml. Los .mp4 son los clips montados; los bloque_NNN.tar son los fotogramas."
+
+  render:
+    needs: bloques
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        bloque: ${{ fromJSON(needs.bloques.outputs.lista) }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fotogramas del bloque y ¿ya hecho?
+        id: hecho
+        run: |
+          echo "inicio=$(date +%s)" >> $GITHUB_OUTPUT
+          for c in $CLIPS; do IFS=: read n a b <<< "$c"; seq $a $b; done > /tmp/todos.txt
+          i=${{ matrix.bloque }}
+          frames=$(sed -n "$(( i*BLOQUE + 1 )),$(( i*BLOQUE + BLOQUE ))p" /tmp/todos.txt | paste -sd,)
+          echo "Fotogramas: $frames"
+          echo "frames=$frames" >> $GITHUB_OUTPUT
+          echo "cuantos=$(echo $frames | tr , '\n' | wc -l)" >> $GITHUB_OUTPUT
+          nombre=$(printf 'bloque_%03d' $i)
+          echo "nombre=$nombre" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null > /tmp/assets.txt || true
+          if grep -qx "$nombre.tar" /tmp/assets.txt; then
+            echo "Ya está en la release: $nombre.tar"; echo "si=1" >> $GITHUB_OUTPUT
+          elif grep -qx "${nombre}_parte.tar" /tmp/assets.txt; then
+            echo "Hay una parte hecha: se continúa"
+            mkdir -p render/vertical && gh release download "$RELEASE" -p "${nombre}_parte.tar" -O /tmp/parte.tar && tar -xf /tmp/parte.tar -C render/vertical
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.hecho.outputs.si != '1'
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender 5.2 y añadir memoria de intercambio
+        if: steps.hecho.outputs.si != '1'
+        working-directory: /tmp
+        run: |
+          v=$(curl -s https://download.blender.org/release/Blender5.2/ | grep -o 'blender-5\.2\.[0-9]*-linux-x64\.tar\.xz' | sort -V | tail -1)
+          curl -sL "https://download.blender.org/release/Blender5.2/$v" | tar xJ
+          echo "$(ls -d /tmp/blender-5.2*/ | head -1)" >> $GITHUB_PATH
+          sudo apt-get install -y -q libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
+          sudo swapoff -a || true
+          sudo fallocate -l 24G /mnt/swapfile && sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile >/dev/null && sudo swapon /mnt/swapfile
+      - uses: actions/cache@v4
+        if: steps.hecho.outputs.si != '1'
+        with:
+          path: escenas/via_muerta/recursos
+          key: recursos-full-${{ hashFiles('escenas/via_muerta/recursos.json') }}
+          restore-keys: recursos-full-
+      - name: Descargar recursos y construir escena
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          python descargar_recursos.py 2>&1 | tail -3
+          blender -b --factory-startup -P construir_escena.py 2>&1 | tail -5
+      - name: Renderizar bloque en vertical
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          # no empieza fotogramas nuevos pasadas 4 h 50 min (el límite es 6 h); lo que quede se termina al relanzar
+          limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          mkdir -p render/vertical /tmp/copia
+          copia=/tmp/copia/${{ steps.hecho.outputs.nombre }}_parte.tar
+          (prev=$(find render/vertical -name 'f_*.png' -size +0 | wc -l); while sleep 600; do
+            n=$(find render/vertical -name 'f_*.png' -size +0 -mmin +1 | wc -l)
+            if [ "$n" -gt "$prev" ]; then
+              (cd render/vertical && find . -name 'f_*.png' -size +0 -mmin +1 | tar -cf "$copia" -T -) &&
+                gh release upload "$RELEASE" "$copia" --clobber >/dev/null && prev=$n && echo "Copia subida: $n fotogramas"
+            fi
+          done) &
+          copiando=$!
+          blender -b via_muerta.blend -P render_vertical.py -- --calidad equilibrada --frames "${{ steps.hecho.outputs.frames }}" --limite $limite --out render/vertical 2>&1 | grep --line-buffered -E "Vertical|Fotograma|rror" || true
+          kill $copiando 2>/dev/null || true
+      - name: Subir a la release
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          n=$(find render/vertical -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de ${{ steps.hecho.outputs.cuantos }}"
+          nombre="${{ steps.hecho.outputs.nombre }}"
+          [ "$n" -gt 0 ] || exit 0
+          subir() { for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$1" --clobber && return 0; echo "Fallo al subir, reintento $i"; sleep $(( 30 * i )); done; return 1; }
+          if [ "$n" -eq ${{ steps.hecho.outputs.cuantos }} ]; then
+            tar -cf "$nombre.tar" -C render/vertical . && subir "$nombre.tar"
+            gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
+          else
+            tar -cf "${nombre}_parte.tar" -C render/vertical . && subir "${nombre}_parte.tar"
+          fi
+
+  montar:
+    needs: [bloques, render]
+    if: always() && needs.bloques.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - name: ¿Están todos los bloques?
+        id: todos
+        run: |
+          n=$(echo '${{ needs.bloques.outputs.lista }}' | tr -d '[]' | tr , '\n' | wc -l)
+          gh release view "$RELEASE" --json assets -q '.assets[].name' > /tmp/assets.txt
+          hechos=$(grep -cE '^bloque_[0-9]{3}\.tar$' /tmp/assets.txt || true)
+          echo "Bloques terminados: $hechos de $n"
+          [ "$hechos" -eq "$n" ] && echo "si=1" >> $GITHUB_OUTPUT || echo "Faltan bloques: se montará al relanzar"
+      - name: Instalar ffmpeg
+        if: steps.todos.outputs.si == '1'
+        timeout-minutes: 15
+        run: |
+          curl -sSfL --retry 5 https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar xJ -C /tmp
+          echo /tmp/ffmpeg-master-latest-linux64-gpl/bin >> $GITHUB_PATH
+      - name: Bajar fotogramas y generar el sonido
+        if: steps.todos.outputs.si == '1'
+        run: |
+          mkdir -p render/vertical
+          for t in $(grep -E '^bloque_[0-9]{3}\.tar$' /tmp/assets.txt); do
+            curl -sSfL --retry 8 --retry-all-errors --retry-delay 10 -o /tmp/$t "https://github.com/$GH_REPO/releases/download/$RELEASE/$t"
+            tar -xf /tmp/$t -C render/vertical && rm /tmp/$t
+          done
+          ls render/vertical | wc -l
+          pip install -q numpy && python3 audio.py 2>&1 | tail -2
+      - name: Montar los clips
+        if: steps.todos.outputs.si == '1'
+        run: |
+          # el mismo etalonaje que montar_video.py (sin el título), con fundidos cortos
+          for c in $CLIPS; do
+            IFS=: read nombre a b <<< "$c"
+            n=$(( b - a + 1 )); dur=$(echo "$n / 24" | bc -l); t0=$(echo "($a - 1) / 24" | bc -l)
+            fin=$(echo "$dur - 0.4" | bc -l)
+            vf="curves=all=0/0 0.12/0.06 0.5/0.47 1/0.98,eq=contrast=1.12:saturation=0.72:gamma=0.95,colorbalance=rs=-0.04:gs=0.01:bs=0.04:rm=-0.03:gm=0.01:bm=0.01:rh=0.03:gh=0.01:bh=-0.03,vignette=angle=PI/3.4,noise=alls=9:allf=t,fade=t=in:st=0:d=0.3,fade=t=out:st=$fin:d=0.4,format=yuv420p"
+            ffmpeg -v error -y -framerate 24 -start_number $a -i render/vertical/f_%04d.png -ss $t0 -t $dur -i sonido.wav \
+              -frames:v $n -vf "$vf" -af "afade=t=in:d=0.3,afade=t=out:st=$fin:d=0.4" \
+              -c:v libx264 -preset slow -crf 18 -tune grain -c:a aac -b:a 192k -shortest -movflags +faststart "$nombre.mp4"
+            ls -la "$nombre.mp4"
+            for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$nombre.mp4" --clobber && break; sleep $((30*i)); done
+          done
