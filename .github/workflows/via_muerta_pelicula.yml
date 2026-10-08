@@ -1,0 +1,227 @@
+name: Via muerta - película entera en GitHub (CPU)
+
+# Renderiza la película entera a calidad final (1920x804, --calidad equilibrada) en los ordenadores
+# gratuitos de GitHub. La película se parte en bloques de 10 fotogramas; cada bloque es un trabajo
+# y se guarda como un .tar en la release "via-muerta-fotogramas". Un bloque que ya está en la
+# release no se repite, así que se puede relanzar las veces que haga falta. Si un bloque no cabe en
+# las 6 h de un trabajo, lo hecho se guarda como bloque_NNN_parte.tar y se termina al relanzar.
+# Una matriz admite como mucho 256 trabajos, así que hay dos (parte 1 y parte 2); GitHub los va
+# ejecutando de 20 en 20. Se lanza subiendo un cambio a escenas/via_muerta/render_github.txt.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/corto-terror-nocturno-41r3pk]
+    paths: ['escenas/via_muerta/render_github.txt']
+
+permissions:
+  contents: write
+
+env:
+  BLOQUE: 10
+  TOTAL: 4457
+  RELEASE: via-muerta-fotogramas
+
+jobs:
+  bloques:
+    runs-on: ubuntu-latest
+    outputs:
+      parte1: ${{ steps.l.outputs.parte1 }}
+      parte2: ${{ steps.l.outputs.parte2 }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - id: l
+        run: |
+          n=$(( (TOTAL + BLOQUE - 1) / BLOQUE ))
+          echo "parte1=[$(seq -s, 0 $(( n < 256 ? n-1 : 255 )))]" >> $GITHUB_OUTPUT
+          echo "parte2=[$(seq -s, 256 $(( n-1 )))]" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" >/dev/null 2>&1 || gh release create "$RELEASE" --prerelease --target "$GITHUB_SHA" --title "Vía muerta: fotogramas" --notes "Fotogramas de la película en bloques de $BLOQUE, generados por via_muerta_pelicula.yml."
+
+  parte1:
+    needs: bloques
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        bloque: ${{ fromJSON(needs.bloques.outputs.parte1) }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - name: ¿Bloque ya hecho?
+        id: hecho
+        run: |
+          echo "inicio=$(date +%s)" >> $GITHUB_OUTPUT
+          nombre=$(printf 'bloque_%03d' ${{ matrix.bloque }})
+          echo "nombre=$nombre" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null > /tmp/assets.txt || true
+          if grep -qx "$nombre.tar" /tmp/assets.txt; then
+            echo "Ya está en la release: $nombre.tar"; echo "si=1" >> $GITHUB_OUTPUT
+          elif grep -qx "${nombre}_parte.tar" /tmp/assets.txt; then
+            echo "Hay una parte hecha: se continúa"
+            mkdir -p render/frames && gh release download "$RELEASE" -p "${nombre}_parte.tar" -O /tmp/parte.tar && tar -xf /tmp/parte.tar -C render/frames
+            ls render/frames
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.hecho.outputs.si != '1'
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender 5.2 y añadir memoria de intercambio
+        if: steps.hecho.outputs.si != '1'
+        working-directory: /tmp
+        run: |
+          v=$(curl -s https://download.blender.org/release/Blender5.2/ | grep -o 'blender-5\.2\.[0-9]*-linux-x64\.tar\.xz' | sort -V | tail -1)
+          curl -sL "https://download.blender.org/release/Blender5.2/$v" | tar xJ
+          echo "$(ls -d /tmp/blender-5.2*/ | head -1)" >> $GITHUB_PATH
+          sudo apt-get install -y -q libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
+          sudo swapoff -a || true
+          sudo fallocate -l 24G /mnt/swapfile && sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile >/dev/null && sudo swapon /mnt/swapfile
+      - uses: actions/cache@v4
+        if: steps.hecho.outputs.si != '1'
+        with:
+          path: escenas/via_muerta/recursos
+          key: recursos-full-${{ hashFiles('escenas/via_muerta/recursos.json') }}
+          restore-keys: recursos-full-
+      - name: Descargar recursos y construir escena
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          python descargar_recursos.py 2>&1 | tail -3
+          blender -b --factory-startup -P construir_escena.py 2>&1 | tail -5
+      - name: Renderizar bloque
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          echo "Fotogramas $a a $b"
+          # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
+          # lo que quede se guarda como parte y se termina en la siguiente ejecución
+          limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          # a veces GitHub apaga el ordenador a mitad: cada 10 min se sube lo hecho como parte para no
+          # perderlo (solo PNG con más de 1 min, ya escritos del todo)
+          mkdir -p render/frames /tmp/copia
+          copia=/tmp/copia/${{ steps.hecho.outputs.nombre }}_parte.tar
+          (prev=$(find render/frames -name 'f_*.png' -size +0 | wc -l); while sleep 600; do
+            n=$(find render/frames -name 'f_*.png' -size +0 -mmin +1 | wc -l)
+            if [ "$n" -gt "$prev" ]; then
+              (cd render/frames && find . -name 'f_*.png' -size +0 -mmin +1 | tar -cf "$copia" -T -) &&
+                gh release upload "$RELEASE" "$copia" --clobber >/dev/null && prev=$n && echo "Copia subida: $n fotogramas"
+            fi
+          done) &
+          copiando=$!
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
+          kill $copiando 2>/dev/null || true
+      - name: Subir a la release
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
+          nombre="${{ steps.hecho.outputs.nombre }}"
+          [ "$n" -gt 0 ] || exit 0
+          # GitHub a veces responde HTTP 500 al subir: se reintenta antes de dar por perdido el bloque
+          subir() { for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$1" --clobber && return 0; echo "Fallo al subir, reintento $i"; sleep $(( 30 * i )); done; return 1; }
+          if [ "$n" -eq $(( b - a + 1 )) ]; then
+            tar -cf "$nombre.tar" -C render/frames . && subir "$nombre.tar"
+            gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
+          else
+            tar -cf "${nombre}_parte.tar" -C render/frames . && subir "${nombre}_parte.tar"
+          fi
+
+  parte2:
+    needs: bloques
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        bloque: ${{ fromJSON(needs.bloques.outputs.parte2) }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - name: ¿Bloque ya hecho?
+        id: hecho
+        run: |
+          echo "inicio=$(date +%s)" >> $GITHUB_OUTPUT
+          nombre=$(printf 'bloque_%03d' ${{ matrix.bloque }})
+          echo "nombre=$nombre" >> $GITHUB_OUTPUT
+          gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null > /tmp/assets.txt || true
+          if grep -qx "$nombre.tar" /tmp/assets.txt; then
+            echo "Ya está en la release: $nombre.tar"; echo "si=1" >> $GITHUB_OUTPUT
+          elif grep -qx "${nombre}_parte.tar" /tmp/assets.txt; then
+            echo "Hay una parte hecha: se continúa"
+            mkdir -p render/frames && gh release download "$RELEASE" -p "${nombre}_parte.tar" -O /tmp/parte.tar && tar -xf /tmp/parte.tar -C render/frames
+            ls render/frames
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.hecho.outputs.si != '1'
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender 5.2 y añadir memoria de intercambio
+        if: steps.hecho.outputs.si != '1'
+        working-directory: /tmp
+        run: |
+          v=$(curl -s https://download.blender.org/release/Blender5.2/ | grep -o 'blender-5\.2\.[0-9]*-linux-x64\.tar\.xz' | sort -V | tail -1)
+          curl -sL "https://download.blender.org/release/Blender5.2/$v" | tar xJ
+          echo "$(ls -d /tmp/blender-5.2*/ | head -1)" >> $GITHUB_PATH
+          sudo apt-get install -y -q libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
+          sudo swapoff -a || true
+          sudo fallocate -l 24G /mnt/swapfile && sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile >/dev/null && sudo swapon /mnt/swapfile
+      - uses: actions/cache@v4
+        if: steps.hecho.outputs.si != '1'
+        with:
+          path: escenas/via_muerta/recursos
+          key: recursos-full-${{ hashFiles('escenas/via_muerta/recursos.json') }}
+          restore-keys: recursos-full-
+      - name: Descargar recursos y construir escena
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          python descargar_recursos.py 2>&1 | tail -3
+          blender -b --factory-startup -P construir_escena.py 2>&1 | tail -5
+      - name: Renderizar bloque
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          echo "Fotogramas $a a $b"
+          # no empieza fotogramas nuevos pasadas 4 h 50 min desde el inicio del trabajo (el límite es 6 h);
+          # lo que quede se guarda como parte y se termina en la siguiente ejecución
+          limite=$(( ${{ steps.hecho.outputs.inicio }} + 290*60 ))
+          # a veces GitHub apaga el ordenador a mitad: cada 10 min se sube lo hecho como parte para no
+          # perderlo (solo PNG con más de 1 min, ya escritos del todo)
+          mkdir -p render/frames /tmp/copia
+          copia=/tmp/copia/${{ steps.hecho.outputs.nombre }}_parte.tar
+          (prev=$(find render/frames -name 'f_*.png' -size +0 | wc -l); while sleep 600; do
+            n=$(find render/frames -name 'f_*.png' -size +0 -mmin +1 | wc -l)
+            if [ "$n" -gt "$prev" ]; then
+              (cd render/frames && find . -name 'f_*.png' -size +0 -mmin +1 | tar -cf "$copia" -T -) &&
+                gh release upload "$RELEASE" "$copia" --clobber >/dev/null && prev=$n && echo "Copia subida: $n fotogramas"
+            fi
+          done) &
+          copiando=$!
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "$(seq -s, $a $b)" --limite $limite --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror" || true
+          kill $copiando 2>/dev/null || true
+      - name: Subir a la release
+        if: steps.hecho.outputs.si != '1'
+        run: |
+          a=$(( ${{ matrix.bloque }} * BLOQUE + 1 )); b=$(( a + BLOQUE - 1 )); b=$(( b > TOTAL ? TOTAL : b ))
+          n=$(find render/frames -name 'f_*.png' -size +0 | wc -l); echo "Hechos: $n de $(( b - a + 1 ))"
+          nombre="${{ steps.hecho.outputs.nombre }}"
+          [ "$n" -gt 0 ] || exit 0
+          # GitHub a veces responde HTTP 500 al subir: se reintenta antes de dar por perdido el bloque
+          subir() { for i in 1 2 3 4 5 6; do gh release upload "$RELEASE" "$1" --clobber && return 0; echo "Fallo al subir, reintento $i"; sleep $(( 30 * i )); done; return 1; }
+          if [ "$n" -eq $(( b - a + 1 )) ]; then
+            tar -cf "$nombre.tar" -C render/frames . && subir "$nombre.tar"
+            gh release delete-asset "$RELEASE" "${nombre}_parte.tar" -y 2>/dev/null || true
+          else
+            tar -cf "${nombre}_parte.tar" -C render/frames . && subir "${nombre}_parte.tar"
+          fi

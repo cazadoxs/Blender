@@ -1,0 +1,7 @@
+__pycache__/
+*.blend1
+recursos/
+render/
+pruebas/
+*.mp4
+sonido.wav

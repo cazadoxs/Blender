@@ -1,0 +1,60 @@
+name: Via muerta - montar el vídeo final
+
+# Baja los 446 bloques de fotogramas de la release via-muerta-fotogramas, monta el vídeo con
+# montar_video.py (sonido, etalonaje y título) y lo sube a la release "via-muerta-video" para poder
+# descargarlo con un enlace. Una release no admite archivos de más de 2 GB, así que el máster se
+# trocea si hace falta (se une en Windows con: copy /b via_muerta.mp4.part* via_muerta.mp4).
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/corto-terror-nocturno-41r3pk]
+    paths: ['.github/workflows/via_muerta_video.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar ffmpeg
+        timeout-minutes: 15
+        # ffmpeg ya compilado desde GitHub (apt a veces se queda colgado en los runners)
+        run: |
+          curl -sSfL --retry 5 https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz | tar xJ -C /tmp
+          echo /tmp/ffmpeg-master-latest-linux64-gpl/bin >> $GITHUB_PATH
+          /tmp/ffmpeg-master-latest-linux64-gpl/bin/ffmpeg -version | head -1
+          ls /usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf || (timeout 300 sudo apt-get install -y -q fonts-dejavu-core >/dev/null)
+      - name: Bajar los fotogramas
+        run: |
+          sudo mkdir -p /mnt/peli && sudo chown $USER /mnt/peli && cd /mnt/peli
+          # enlaces públicos de descarga, con reintentos (la API de GitHub a veces da HTTP 500)
+          for i in $(seq 0 445); do echo "https://github.com/$GH_REPO/releases/download/via-muerta-fotogramas/$(printf bloque_%03d.tar $i)"; done > urls.txt
+          xargs -P 8 -n 1 curl -sSfLO --retry 8 --retry-all-errors --retry-delay 10 < urls.txt
+          [ $(ls bloque_???.tar | wc -l) -eq 446 ]
+          mkdir frames && for t in bloque_???.tar; do tar -xf $t -C frames && rm $t; done
+          ls frames | wc -l
+          mkdir -p $GITHUB_WORKSPACE/escenas/via_muerta/render && ln -s /mnt/peli/frames $GITHUB_WORKSPACE/escenas/via_muerta/render/frames
+      - name: Generar el sonido
+        working-directory: escenas/via_muerta
+        run: pip install -q numpy && python3 audio.py 2>&1 | tail -2 && ls -la sonido.wav
+      - name: Montar
+        working-directory: escenas/via_muerta
+        run: python3 montar_video.py 2>&1 | tail -15 && ls -la via_muerta.mp4
+      - name: Versión ligera
+        working-directory: escenas/via_muerta
+        run: ffmpeg -v error -y -i via_muerta.mp4 -c:v libx264 -preset slow -crf 23 -c:a aac -b:a 192k -movflags +faststart via_muerta_ligero.mp4 && ls -la via_muerta_ligero.mp4
+      - name: Subir a la release via-muerta-video
+        working-directory: escenas/via_muerta
+        run: |
+          gh release view via-muerta-video >/dev/null 2>&1 || gh release create via-muerta-video --prerelease --target "$GITHUB_SHA" --title "Vía muerta: vídeo final" --notes "Vídeo final de Vía muerta. via_muerta_ligero.mp4 se ve directamente. El máster en máxima calidad va troceado: se une en Windows con copy /b via_muerta.mp4.part* via_muerta.mp4"
+          split -b 1900M -d via_muerta.mp4 via_muerta.mp4.part
+          ls -la via_muerta.mp4.part*
+          for f in via_muerta_ligero.mp4 via_muerta.mp4.part*; do
+            for i in 1 2 3 4 5 6; do gh release upload via-muerta-video "$f" --clobber && break; echo "reintento $i"; sleep $((30*i)); done
+          done

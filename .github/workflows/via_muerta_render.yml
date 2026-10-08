@@ -1,0 +1,76 @@
+name: Via muerta - render en GitHub (CPU)
+
+# Renderiza fotogramas de la película a calidad final (1920x804, --calidad equilibrada) en los
+# ordenadores gratuitos de GitHub, sin tarjeta gráfica, con el mismo Blender que el PC (5.2).
+# Primero sirve para medir cuánto tarda cada fotograma. Los fotogramas y el registro se publican
+# en la rama pruebas-via-muerta-render.
+on:
+  workflow_dispatch:
+    inputs:
+      frames:
+        description: Fotogramas a renderizar
+        default: '2700,481'
+  push:
+    branches: [claude/corto-terror-nocturno-41r3pk]
+    paths: ['.github/workflows/via_muerta_render.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: via-muerta-render
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    defaults:
+      run:
+        working-directory: escenas/via_muerta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar Blender 5.2
+        working-directory: /tmp
+        run: |
+          v=$(curl -s https://download.blender.org/release/Blender5.2/ | grep -o 'blender-5\.2\.[0-9]*-linux-x64\.tar\.xz' | sort -V | tail -1)
+          echo "Descargando $v"
+          curl -sL "https://download.blender.org/release/Blender5.2/$v" | tar xJ
+          echo "$(ls -d /tmp/blender-5.2*/ | head -1)" >> $GITHUB_PATH
+          sudo apt-get install -y -q libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
+      - name: Comprobar Blender y añadir memoria de intercambio
+        run: |
+          blender --version | head -1
+          # 16 GB de RAM se quedan cortos con 470.000 instancias de vegetación: 24 GB de swap en el disco grande
+          sudo swapoff -a || true
+          sudo fallocate -l 24G /mnt/swapfile && sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile >/dev/null && sudo swapon /mnt/swapfile
+          free -g
+      - uses: actions/cache@v4
+        with:
+          path: escenas/via_muerta/recursos
+          key: recursos-full-${{ hashFiles('escenas/via_muerta/recursos.json') }}
+          restore-keys: recursos-full-
+      - name: Descargar recursos (resolución completa, como en el PC)
+        run: python descargar_recursos.py 2>&1 | tail -20 | tee descarga.log
+      - name: Construir escena
+        run: blender -b --factory-startup -P construir_escena.py 2>&1 | tail -40 | tee construir.log
+      - name: Renderizar
+        run: |
+          nproc; free -g
+          (while sleep 120; do echo "memoria: $(free -m | awk '/Mem/{print $3}') MB usados, swap $(free -m | awk '/Swap/{print $3}') MB"; done) &
+          blender -b via_muerta.blend -P render.py -- --calidad equilibrada --frames "${{ inputs.frames || '2700,481' }}" --out render/frames 2>&1 | grep --line-buffered -E "Fotograma|rror|GPU|CPU|Sample 1/|Sample 64/|Sample 128/" | tee render.log
+      - name: Publicar en la rama pruebas-via-muerta-render
+        if: always()
+        run: |
+          mkdir -p /tmp/pub && cp -r render/frames /tmp/pub/ 2>/dev/null || true
+          cp descarga.log construir.log render.log /tmp/pub/ 2>/dev/null || true
+          cd /tmp/pub
+          git init -q -b pruebas-via-muerta-render
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          echo "Render de ${GITHUB_SHA} ($(date -u))" > LEEME.txt
+          git add -A && git commit -qm "Render ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" pruebas-via-muerta-render
