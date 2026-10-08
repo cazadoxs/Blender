@@ -34,9 +34,12 @@ jobs:
           mkdir frames && for t in bloque_???.tar; do tar -xf $t -C frames && rm $t; done
           ls frames | wc -l
           mkdir -p $GITHUB_WORKSPACE/escenas/via_muerta/render && ln -s /mnt/peli/frames $GITHUB_WORKSPACE/escenas/via_muerta/render/frames
+      - name: Generar el sonido
+        working-directory: escenas/via_muerta
+        run: pip install -q numpy && python3 audio.py 2>&1 | tail -2 && ls -la sonido.wav
       - name: Montar
         working-directory: escenas/via_muerta
-        run: python3 montar_video.py 2>&1 | tail -3 && ls -la via_muerta.mp4
+        run: python3 montar_video.py 2>&1 | tail -15 && ls -la via_muerta.mp4
       - name: Versión ligera
         working-directory: escenas/via_muerta
         run: ffmpeg -v error -y -i via_muerta.mp4 -c:v libx264 -preset slow -crf 23 -c:a aac -b:a 192k -movflags +faststart via_muerta_ligero.mp4 && ls -la via_muerta_ligero.mp4
