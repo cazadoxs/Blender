@@ -27,7 +27,10 @@ jobs:
       - name: Bajar los fotogramas
         run: |
           sudo mkdir -p /mnt/peli && sudo chown $USER /mnt/peli && cd /mnt/peli
-          gh release download via-muerta-fotogramas -p 'bloque_???.tar'
+          # enlaces públicos de descarga, con reintentos (la API de GitHub a veces da HTTP 500)
+          for i in $(seq 0 445); do echo "https://github.com/$GH_REPO/releases/download/via-muerta-fotogramas/$(printf bloque_%03d.tar $i)"; done > urls.txt
+          xargs -P 8 -n 1 curl -sSfLO --retry 8 --retry-all-errors --retry-delay 10 < urls.txt
+          [ $(ls bloque_???.tar | wc -l) -eq 446 ]
           mkdir frames && for t in bloque_???.tar; do tar -xf $t -C frames && rm $t; done
           ls frames | wc -l
           mkdir -p $GITHUB_WORKSPACE/escenas/via_muerta/render && ln -s /mnt/peli/frames $GITHUB_WORKSPACE/escenas/via_muerta/render/frames
